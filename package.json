@@ -1,0 +1,44 @@
+{
+  "name": "@thewhodidthis/binocular",
+  "version": "0.0.0",
+  "description": "Helps inspect sounds",
+  "main": "index.js",
+  "module": "index.mjs",
+  "homepage": "https://github.com/thewhodidthis/binocular#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thewhodidthis/binocular.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thewhodidthis/binocular/issues"
+  },
+  "scripts": {
+    "pretest": "eslint test.js",
+    "test": "browserify test | kpow",
+    "prestart": "eslint *.mjs",
+    "start": "rollup -c node:x -f cjs index.mjs | buble > index.js",
+    "preexample": "eslint example/index.es",
+    "example": "cd example; rollup -f iife index.es | buble > index.js",
+    "postexample": "open example/index.html"
+  },
+  "eslintConfig": {
+    "extends": "@thewhodidthis"
+  },
+  "engines": {
+    "node": ">=4.2.4",
+    "npm": ">=3.5.3"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@thewhodidthis/eslint-config": "latest",
+    "browserify": "latest",
+    "buble": "latest",
+    "eslint": "latest",
+    "kpow": "latest",
+    "rollup": "latest",
+    "rollup-config-x": "latest",
+    "tape": "latest"
+  },
+  "author": "sChzs BkgNns <sotirios.bakagiannis@gmail.com> (https://www.thewhodidthis.com)",
+  "license": "Unlicense"
+}
