@@ -65,18 +65,13 @@ const loop = animate((id) => {
   draw()
 })
 
-let firstRun = true
-
-const kick = audio.createOscillator()
-
 const next = () => {
-  // Quick iOS fix
-  if (firstRun) {
-    firstRun = kick.start()
-  }
-
   const time = audio.currentTime
   const busy = loop()
+
+  if (busy === 1) {
+    play(0)
+  }
 
   if (busy === undefined) {
     fader.gain.setTargetAtTime(0, time, 0.25)

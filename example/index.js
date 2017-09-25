@@ -177,18 +177,13 @@ var loop = animate(function (id) {
   draw();
 });
 
-var firstRun = true;
-
-var kick = audio.createOscillator();
-
 var next = function () {
-  // Quick iOS fix
-  if (firstRun) {
-    firstRun = kick.start();
-  }
-
   var time = audio.currentTime;
   var busy = loop();
+
+  if (busy === 1) {
+    play(0);
+  }
 
   if (busy === undefined) {
     fader.gain.setTargetAtTime(0, time, 0.25);
