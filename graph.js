@@ -10,20 +10,21 @@ export const linear = (source, target) => {
 
   const f = (h / 256) * 0.75
   const g = Math.round(w / count)
-  const n = count * g * 0.5
-
-  const barW = g * 0.25
 
   return (values) => {
     target.save()
     target.clearRect(0, 0, w, h)
-    target.translate(halfW, halfH)
+    target.translate(0, halfH)
+
+    target.beginPath()
 
     for (let i = 0; i < count; i += 1) {
       const x = i * g
       const v = f * values[i]
 
-      target.fillRect(x - n, -v * 0.5, barW, v)
+      target.moveTo(x, v * 0.5)
+      target.lineTo(x, v * 0.5 * -1)
+      target.stroke()
     }
 
     target.restore()

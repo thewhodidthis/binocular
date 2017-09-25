@@ -37,24 +37,23 @@ var linear = function (source, target) {
   var h = ref.height;
 
   var halfH = h * 0.5;
-  var halfW = w * 0.5;
-
   var f = (h / 256) * 0.75;
   var g = Math.round(w / count);
-  var n = count * g * 0.5;
-
-  var barW = g * 0.25;
 
   return function (values) {
     target.save();
     target.clearRect(0, 0, w, h);
-    target.translate(halfW, halfH);
+    target.translate(0, halfH);
+
+    target.beginPath();
 
     for (var i = 0; i < count; i += 1) {
       var x = i * g;
       var v = f * values[i];
 
-      target.fillRect(x - n, -v * 0.5, barW, v);
+      target.moveTo(x, v * 0.5);
+      target.lineTo(x, v * 0.5 * -1);
+      target.stroke();
     }
 
     target.restore();
