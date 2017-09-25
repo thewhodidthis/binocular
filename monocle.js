@@ -1,7 +1,7 @@
-import { ring } from './graph'
+import { radial } from './graph'
 
 const monocle = (...param) => {
-  let graph = ring
+  let graph = radial
 
   param.forEach((v, i) => {
     if (typeof v === 'function') {

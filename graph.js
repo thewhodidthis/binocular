@@ -1,7 +1,7 @@
 const TAU = Math.PI * 2
 const deg = TAU / 360
 
-export const flat = (source, target) => {
+export const linear = (source, target) => {
   const count = source.frequencyBinCount
   const { width: w, height: h } = target.canvas
 
@@ -30,7 +30,7 @@ export const flat = (source, target) => {
   }
 }
 
-export const ring = (source, target) => {
+export const radial = (source, target) => {
   const count = source.frequencyBinCount
   const { width: w, height: h } = target.canvas
 
@@ -41,7 +41,7 @@ export const ring = (source, target) => {
   const r = h * 0.325
   const f = (h - r) / 256
 
-  return (bands) => {
+  return (values) => {
     target.save()
     target.clearRect(0, 0, w, h)
     target.translate(halfW, halfH)
@@ -49,9 +49,8 @@ export const ring = (source, target) => {
 
     for (let i = 0; i < count; i += 1) {
       const angle = i * steps * deg
-      const v = f * bands[i]
+      const v = f * values[i]
 
-      // Polar to cartesian
       const r1 = r - (v * 0.25)
       const r2 = r + (v * 0.25)
       const x1 = r1 * Math.cos(angle)

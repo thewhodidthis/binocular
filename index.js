@@ -2,15 +2,15 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var animate = function (callback, fps) {
-  if ( fps === void 0 ) fps = 1;
+var animate = function (callback, count) {
+  if ( count === void 0 ) count = 1;
 
   var frameId;
 
   var play = function (fn) { return window.requestAnimationFrame(fn); };
   var stop = function () { return window.cancelAnimationFrame(frameId); };
   var loop = function () {
-    if (frameId % fps === 0) {
+    if (frameId % count === 0) {
       callback(frameId);
     }
 
@@ -30,7 +30,7 @@ var animate = function (callback, fps) {
 var TAU = Math.PI * 2;
 var deg = TAU / 360;
 
-var flat = function (source, target) {
+var linear = function (source, target) {
   var count = source.frequencyBinCount;
   var ref = target.canvas;
   var w = ref.width;
@@ -61,7 +61,7 @@ var flat = function (source, target) {
   }
 };
 
-var ring = function (source, target) {
+var radial = function (source, target) {
   var count = source.frequencyBinCount;
   var ref = target.canvas;
   var w = ref.width;
@@ -74,7 +74,7 @@ var ring = function (source, target) {
   var r = h * 0.325;
   var f = (h - r) / 256;
 
-  return function (bands) {
+  return function (values) {
     target.save();
     target.clearRect(0, 0, w, h);
     target.translate(halfW, halfH);
@@ -82,9 +82,8 @@ var ring = function (source, target) {
 
     for (var i = 0; i < count; i += 1) {
       var angle = i * steps * deg;
-      var v = f * bands[i];
+      var v = f * values[i];
 
-      // Polar to cartesian
       var r1 = r - (v * 0.25);
       var r2 = r + (v * 0.25);
       var x1 = r1 * Math.cos(angle);
@@ -106,7 +105,7 @@ var monocle = function () {
   var param = [], len = arguments.length;
   while ( len-- ) param[ len ] = arguments[ len ];
 
-  var graph = ring;
+  var graph = radial;
 
   param.forEach(function (v, i) {
     if (typeof v === 'function') {
@@ -143,6 +142,6 @@ var monocle = function () {
 
 exports.animate = animate;
 exports.monocle = monocle;
-exports.ring = ring;
-exports.flat = flat;
+exports.linear = linear;
+exports.radial = radial;
 

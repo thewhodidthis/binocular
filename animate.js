@@ -1,10 +1,10 @@
-const animate = (callback, fps = 1) => {
+const animate = (callback, count = 1) => {
   let frameId
 
   const play = fn => window.requestAnimationFrame(fn)
   const stop = () => window.cancelAnimationFrame(frameId)
   const loop = () => {
-    if (frameId % fps === 0) {
+    if (frameId % count === 0) {
       callback(frameId)
     }
 
