@@ -141,6 +141,8 @@ var monocle = function () {
 
 exports.animate = animate;
 exports.monocle = monocle;
+exports.TAU = TAU;
+exports.deg = deg;
 exports.linear = linear;
 exports.radial = radial;
 

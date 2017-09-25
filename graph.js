@@ -1,5 +1,5 @@
-const TAU = Math.PI * 2
-const deg = TAU / 360
+export const TAU = Math.PI * 2
+export const deg = TAU / 360
 
 export const linear = (source, target) => {
   const count = source.frequencyBinCount
