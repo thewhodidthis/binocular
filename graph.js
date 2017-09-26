@@ -1,37 +1,45 @@
 export const TAU = Math.PI * 2
 export const deg = TAU / 360
 
-export const linear = (source, target) => {
+export const linear = (source, target, adjust) => {
   const count = source.frequencyBinCount
   const { width: w, height: h } = target.canvas
 
+  // Vertical center
   const halfH = h * 0.5
-  const halfW = w * 0.5
 
-  const f = (h / 256) * 0.75
-  const g = Math.round(w / count)
+  // Diameter, available space
+  const d = Math.min(w, h)
 
-  return (values) => {
-    target.save()
+  // Radius
+  const r = d * 0.5
+
+  // Horizontal step multiplier
+  const s = Math.round(w / count)
+
+  return (values, domain) => {
     target.clearRect(0, 0, w, h)
-    target.translate(0, halfH)
 
+    target.save()
+    target.translate(0, halfH)
     target.beginPath()
 
     for (let i = 0; i < count; i += 1) {
-      const x = i * g
-      const v = f * values[i]
+      const v = values[i]
 
-      target.moveTo(x, v * 0.5)
-      target.lineTo(x, v * 0.5 * -1)
+      // Make sure a pixel is drawn when zero, doesn't look very nice otherwise
+      const y = (r * adjust(v)) + 1
+      const x = i * s
+
+      target.moveTo(x, y)
+      target.lineTo(x, y * -1)
       target.stroke()
     }
 
     target.restore()
   }
 }
-
-export const radial = (source, target) => {
+export const radial = (source, target, adjust) => {
   const count = source.frequencyBinCount
   const { width: w, height: h } = target.canvas
 
@@ -39,21 +47,29 @@ export const radial = (source, target) => {
   const halfH = h * 0.5
   const halfW = w * 0.5
 
-  const r = h * 0.325
-  const f = (h - r) / 256
+  // Figure out available space
+  const d = Math.min(w, h)
+
+  // Base radius
+  const r = d * 0.325
+
+  // Precalculate multiplier
+  const f = r * 0.5
 
   return (values) => {
-    target.save()
     target.clearRect(0, 0, w, h)
+
+    target.save()
     target.translate(halfW, halfH)
     target.rotate(-0.25 * TAU)
 
     for (let i = 0; i < count; i += 1) {
       const angle = i * steps * deg
-      const v = f * values[i]
+      const v = values[i]
+      const k = adjust(v) * f
 
-      const r1 = r - (v * 0.25)
-      const r2 = r + (v * 0.25)
+      const r1 = r - k
+      const r2 = r + k
       const x1 = r1 * Math.cos(angle)
       const y1 = r1 * Math.sin(angle)
       const x2 = r2 * Math.cos(angle)
