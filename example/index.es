@@ -1,4 +1,4 @@
-import { animate, monocle } from '../index.mjs'
+import { animate, monocle } from '../'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
