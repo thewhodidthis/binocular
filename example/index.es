@@ -76,7 +76,7 @@ const next = () => {
   if (busy === undefined) {
     fader.gain.setTargetAtTime(0, time, 0.25)
   } else {
-    fader.gain.setTargetAtTime(1 / total, time, 1)
+    fader.gain.setTargetAtTime(0.1, time, 1)
   }
 }
 

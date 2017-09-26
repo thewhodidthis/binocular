@@ -30,8 +30,7 @@ var TAU = Math.PI * 2;
 var deg = TAU / 360;
 
 
-
-var radial = function (source, target) {
+var radial = function (source, target, adjust) {
   var count = source.frequencyBinCount;
   var ref = target.canvas;
   var w = ref.width;
@@ -41,21 +40,29 @@ var radial = function (source, target) {
   var halfH = h * 0.5;
   var halfW = w * 0.5;
 
-  var r = h * 0.325;
-  var f = (h - r) / 256;
+  // Figure out available space
+  var d = Math.min(w, h);
+
+  // Base radius
+  var r = d * 0.325;
+
+  // Precalculate multiplier
+  var f = r * 0.5;
 
   return function (values) {
-    target.save();
     target.clearRect(0, 0, w, h);
+
+    target.save();
     target.translate(halfW, halfH);
     target.rotate(-0.25 * TAU);
 
     for (var i = 0; i < count; i += 1) {
       var angle = i * steps * deg;
-      var v = f * values[i];
+      var v = values[i];
+      var k = adjust(v) * f;
 
-      var r1 = r - (v * 0.25);
-      var r2 = r + (v * 0.25);
+      var r1 = r - k;
+      var r2 = r + k;
       var x1 = r1 * Math.cos(angle);
       var y1 = r1 * Math.sin(angle);
       var x2 = r2 * Math.cos(angle);
@@ -84,6 +91,7 @@ var monocle = function () {
     }
   });
 
+  // No matter where the callback in found in the arguments, at least specify these in order
   var input = param[0];
   var board = param[1];
   var pitch = param[2]; if ( pitch === void 0 ) pitch = false;
@@ -92,19 +100,22 @@ var monocle = function () {
   var audio = input.context;
   var scope = audio.createAnalyser();
 
+  // Center values based on whether in the time or frequency domain (1 / 128 or 1 / 256)
+  var scale = function (v) { return pitch ? v * 0.00390625 : (v * 0.0078125) - 1; };
+
   scope.fftSize = fftSize;
 
   var bins = scope.frequencyBinCount;
   var data = new Uint8Array(bins);
 
   var copy = function (d) { return (pitch ? scope.getByteFrequencyData(d) : scope.getByteTimeDomainData(d)); };
-  var draw = graph(scope, board);
+  var draw = graph(scope, board, scale);
 
   input.connect(scope);
 
-  return function (extra) {
+  return function (xtra) {
     copy(data);
-    draw(data, extra);
+    draw(data, xtra);
 
     return scope
   }
@@ -188,7 +199,7 @@ var next = function () {
   if (busy === undefined) {
     fader.gain.setTargetAtTime(0, time, 0.25);
   } else {
-    fader.gain.setTargetAtTime(1 / total, time, 1);
+    fader.gain.setTargetAtTime(0.1, time, 1);
   }
 };
 
