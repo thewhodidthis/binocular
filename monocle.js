@@ -10,10 +10,14 @@ const monocle = (...param) => {
     }
   })
 
+  // No matter where the callback in found in the arguments, at least specify these in order
   const [input, board, pitch = false, fftSize = 256] = param
 
   const audio = input.context
   const scope = audio.createAnalyser()
+
+  // Center values based on whether in the time or frequency domain (1 / 128 or 1 / 256)
+  const scale = v => pitch ? v * 0.00390625 : (v * 0.0078125) - 1
 
   scope.fftSize = fftSize
 
@@ -21,13 +25,13 @@ const monocle = (...param) => {
   const data = new Uint8Array(bins)
 
   const copy = d => (pitch ? scope.getByteFrequencyData(d) : scope.getByteTimeDomainData(d))
-  const draw = graph(scope, board)
+  const draw = graph(scope, board, scale)
 
   input.connect(scope)
 
-  return (extra) => {
+  return (xtra) => {
     copy(data)
-    draw(data, extra)
+    draw(data, xtra)
 
     return scope
   }
