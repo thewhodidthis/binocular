@@ -17,9 +17,21 @@ const sound = audio.createOscillator()
 sound.connect(audio.destination)
 
 const board = document.createElement('canvas').getContext('2d')
-const scope = monocle(sound, board)
-const start = (fn = scope) => window.requestAnimationFrame(fn)
+const chart = monocle(sound, board)
+const frame = () => {
+  chart()
+
+  window.requestAnimationFrame(frame)
+}
 
 document.body.appendChild(board.canvas)
-document.addEventListener('DOMContentLoaded', start)
+document.addEventListener('DOMContentLoaded', frame)
+
+let idle = true
+
+document.addEventListener('click', () => {
+    if (idle) {
+        idle = sound.start()
+    }
+})
 ```
