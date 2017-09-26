@@ -15,10 +15,10 @@
   "scripts": {
     "pretest": "eslint test.js",
     "test": "browserify test | kpow",
-    "prestart": "eslint *.mjs",
+    "prestart": "eslint . --ext es,mjs",
     "start": "rollup -c node:x -f cjs index.mjs | buble > index.js",
     "preexample": "eslint example/index.es",
-    "example": "cd example; rollup -f iife index.es | buble > index.js",
+    "example": "cd example; rollup -c node:x -f iife index.es | buble > index.js",
     "postexample": "open example/index.html"
   },
   "eslintConfig": {
