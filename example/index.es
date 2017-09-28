@@ -7,23 +7,26 @@ const fader = audio.createGain()
 
 const store = []
 const total = 12
-const plier = Math.pow(2, 1 / total)
+const cents = 1 / total
+const plier = Math.pow(2, cents)
 
 const play = (frame) => {
   let f = 20
 
   for (let i = 0; i < total; i += 1) {
-    if (store[i]) {
-      store[i].stop()
+    let voice = store[i]
+
+    if (voice) {
+      voice.stop()
     }
 
-    const sound = audio.createOscillator()
+    voice = audio.createOscillator()
 
-    sound.frequency.value = f * Math.pow(plier, frame)
-    sound.connect(fader)
-    sound.start()
+    voice.frequency.value = f * Math.pow(plier, frame)
+    voice.connect(fader)
+    voice.start()
 
-    store[i] = sound
+    store[i] = voice
 
     f *= 2
   }
@@ -36,6 +39,12 @@ const master = document.querySelector('canvas').getContext('2d')
 const board1 = document.createElement('canvas').getContext('2d')
 const board2 = document.createElement('canvas').getContext('2d')
 
+const { width, height } = master.canvas
+
+const halfW = width * 0.5
+const jumpX = -25
+const jumpY = board1.canvas.height * 0.5
+
 board1.strokeStyle = '#fff'
 
 // Partials
@@ -44,17 +53,15 @@ const scope1 = monocle(fader, board1, true)
 // Time domain
 const scope2 = monocle(fader, board2)
 
-const { width, height } = master.canvas
-
 const draw = () => {
   scope1()
   scope2()
 
   master.clearRect(0, 0, width, height)
-  master.fillRect(0, 0, 250, height)
+  master.fillRect(0, 0, halfW, height)
 
-  master.drawImage(board1.canvas, -25, 75)
-  master.drawImage(board2.canvas, 225, 75)
+  master.drawImage(board1.canvas, jumpX, jumpY)
+  master.drawImage(board2.canvas, halfW + jumpX, jumpY)
 }
 
 const loop = animate((id) => {
@@ -74,9 +81,9 @@ const next = () => {
   }
 
   if (busy === undefined) {
-    fader.gain.setTargetAtTime(0, time, 0.25)
+    fader.gain.setTargetAtTime(0, time, 0.125)
   } else {
-    fader.gain.setTargetAtTime(0.1, time, 1)
+    fader.gain.setTargetAtTime(cents, time, 1)
   }
 }
 

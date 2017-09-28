@@ -129,23 +129,26 @@ var fader = audio.createGain();
 
 var store = [];
 var total = 12;
-var plier = Math.pow(2, 1 / total);
+var cents = 1 / total;
+var plier = Math.pow(2, cents);
 
 var play = function (frame) {
   var f = 20;
 
   for (var i = 0; i < total; i += 1) {
-    if (store[i]) {
-      store[i].stop();
+    var voice = store[i];
+
+    if (voice) {
+      voice.stop();
     }
 
-    var sound = audio.createOscillator();
+    voice = audio.createOscillator();
 
-    sound.frequency.value = f * Math.pow(plier, frame);
-    sound.connect(fader);
-    sound.start();
+    voice.frequency.value = f * Math.pow(plier, frame);
+    voice.connect(fader);
+    voice.start();
 
-    store[i] = sound;
+    store[i] = voice;
 
     f *= 2;
   }
@@ -158,6 +161,14 @@ var master = document.querySelector('canvas').getContext('2d');
 var board1 = document.createElement('canvas').getContext('2d');
 var board2 = document.createElement('canvas').getContext('2d');
 
+var ref = master.canvas;
+var width = ref.width;
+var height = ref.height;
+
+var halfW = width * 0.5;
+var jumpX = -25;
+var jumpY = board1.canvas.height * 0.5;
+
 board1.strokeStyle = '#fff';
 
 // Partials
@@ -166,19 +177,15 @@ var scope1 = monocle(fader, board1, true);
 // Time domain
 var scope2 = monocle(fader, board2);
 
-var ref = master.canvas;
-var width = ref.width;
-var height = ref.height;
-
 var draw = function () {
   scope1();
   scope2();
 
   master.clearRect(0, 0, width, height);
-  master.fillRect(0, 0, 250, height);
+  master.fillRect(0, 0, halfW, height);
 
-  master.drawImage(board1.canvas, -25, 75);
-  master.drawImage(board2.canvas, 225, 75);
+  master.drawImage(board1.canvas, jumpX, jumpY);
+  master.drawImage(board2.canvas, halfW + jumpX, jumpY);
 };
 
 var loop = animate(function (id) {
@@ -198,9 +205,9 @@ var next = function () {
   }
 
   if (busy === undefined) {
-    fader.gain.setTargetAtTime(0, time, 0.25);
+    fader.gain.setTargetAtTime(0, time, 0.125);
   } else {
-    fader.gain.setTargetAtTime(0.1, time, 1);
+    fader.gain.setTargetAtTime(cents, time, 1);
   }
 };
 
