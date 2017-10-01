@@ -99,8 +99,10 @@ var radial = function (source, target, adjust) {
 
     for (var i = 0; i < count; i += 1) {
       var angle = i * steps * deg;
+
       var v = values[i];
-      var k = adjust(v) * f;
+      var g = adjust(v);
+      var k = Math.max(f * g, 1);
 
       var r1 = r - k;
       var r2 = r + k;

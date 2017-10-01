@@ -28,7 +28,7 @@ export const linear = (source, target, adjust) => {
       const v = values[i]
 
       // Make sure a pixel is drawn when zero, doesn't look very nice otherwise
-      const y = (r * adjust(v)) + 1
+      const y = r * adjust(v) || 1
       const x = i * s
 
       target.moveTo(x, y)
@@ -66,8 +66,9 @@ export const radial = (source, target, adjust) => {
 
     for (let i = 0; i < count; i += 1) {
       const angle = i * steps * deg
+
       const v = values[i]
-      const k = adjust(v) * f
+      const k = f * adjust(v) || 1
 
       const r1 = r - k
       const r2 = r + k
