@@ -59,8 +59,9 @@ var radial = function (source, target, adjust) {
 
     for (var i = 0; i < count; i += 1) {
       var angle = i * steps * deg;
+
       var v = values[i];
-      var k = adjust(v) * f;
+      var k = f * adjust(v) || 1;
 
       var r1 = r - k;
       var r2 = r + k;
@@ -132,9 +133,7 @@ var total = 12;
 var cents = 1 / total;
 var plier = Math.pow(2, cents);
 
-var play = function (frame) {
-  var f = 20;
-
+var play = function (step) {
   for (var i = 0; i < total; i += 1) {
     var voice = store[i];
 
@@ -144,13 +143,11 @@ var play = function (frame) {
 
     voice = audio.createOscillator();
 
-    voice.frequency.value = f * Math.pow(plier, frame);
+    voice.frequency.value = 20 * Math.pow(2, i) * Math.pow(plier, step);
     voice.connect(fader);
     voice.start();
 
     store[i] = voice;
-
-    f *= 2;
   }
 };
 
@@ -185,12 +182,12 @@ var draw = function () {
   master.fillRect(0, 0, halfW, height);
 
   master.drawImage(board1.canvas, jumpX, jumpY);
-  master.drawImage(board2.canvas, halfW + jumpX, jumpY);
+  master.drawImage(board2.canvas, jumpX + halfW, jumpY);
 };
 
-var loop = animate(function (id) {
-  if (id % 25 === 0) {
-    play(id % total);
+var loop = animate(function (f) {
+  if (f % 25 === 0) {
+    play(f % total);
   }
 
   draw();

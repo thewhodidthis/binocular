@@ -10,9 +10,7 @@ const total = 12
 const cents = 1 / total
 const plier = Math.pow(2, cents)
 
-const play = (frame) => {
-  let f = 20
-
+const play = (step) => {
   for (let i = 0; i < total; i += 1) {
     let voice = store[i]
 
@@ -22,13 +20,11 @@ const play = (frame) => {
 
     voice = audio.createOscillator()
 
-    voice.frequency.value = f * Math.pow(plier, frame)
+    voice.frequency.value = 20 * Math.pow(2, i) * Math.pow(plier, step)
     voice.connect(fader)
     voice.start()
 
     store[i] = voice
-
-    f *= 2
   }
 }
 
@@ -61,12 +57,12 @@ const draw = () => {
   master.fillRect(0, 0, halfW, height)
 
   master.drawImage(board1.canvas, jumpX, jumpY)
-  master.drawImage(board2.canvas, halfW + jumpX, jumpY)
+  master.drawImage(board2.canvas, jumpX + halfW, jumpY)
 }
 
-const loop = animate((id) => {
-  if (id % 25 === 0) {
-    play(id % total)
+const loop = animate((f) => {
+  if (f % 25 === 0) {
+    play(f % total)
   }
 
   draw()
