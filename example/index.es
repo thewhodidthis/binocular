@@ -1,4 +1,4 @@
-import { animate, monocle } from '../'
+import { animate, monocle } from '../index.es'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
