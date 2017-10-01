@@ -15,7 +15,7 @@
   "scripts": {
     "pretest": "eslint test.js",
     "test": "browserify test | kpow",
-    "prestart": "eslint . --ext es,mjs",
+    "prestart": "eslint . --ignore-path index.js",
     "start": "rollup -c node:x -f cjs index.mjs | buble > index.js",
     "preexample": "eslint example/index.es",
     "example": "cd example; rollup -c node:x -f iife index.es | buble > index.js",
