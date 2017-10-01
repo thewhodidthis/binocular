@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Helps inspect sounds",
   "main": "index.js",
-  "module": "index.mjs",
+  "module": "index.es",
   "homepage": "https://github.com/thewhodidthis/binocular#readme",
   "repository": {
     "type": "git",
@@ -15,8 +15,8 @@
   "scripts": {
     "pretest": "eslint test.js",
     "test": "browserify test | kpow",
-    "prestart": "eslint . --ignore-path index.js",
-    "start": "rollup -c node:x -f cjs index.mjs | buble > index.js",
+    "prestart": "eslint . --ext es,js --ignore-pattern index.js",
+    "start": "rollup -c node:x -f cjs index.es | buble > index.js",
     "preexample": "eslint example/index.es",
     "example": "cd example; rollup -c node:x -f iife index.es | buble > index.js",
     "postexample": "open example/index.html"
