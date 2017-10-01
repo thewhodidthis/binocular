@@ -59,7 +59,7 @@ var linear = function (source, target, adjust) {
       var v = values[i];
 
       // Make sure a pixel is drawn when zero, doesn't look very nice otherwise
-      var y = (r * adjust(v)) + 1;
+      var y = r * adjust(v) || 1;
       var x = i * s;
 
       target.moveTo(x, y);
@@ -101,8 +101,7 @@ var radial = function (source, target, adjust) {
       var angle = i * steps * deg;
 
       var v = values[i];
-      var g = adjust(v);
-      var k = Math.max(f * g, 1);
+      var k = f * adjust(v) || 1;
 
       var r1 = r - k;
       var r2 = r + k;
