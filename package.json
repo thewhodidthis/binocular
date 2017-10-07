@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "description": "Helps inspect sounds",
   "main": "index.js",
-  "module": "index.es",
   "homepage": "https://github.com/thewhodidthis/binocular#readme",
   "repository": {
     "type": "git",
@@ -13,13 +12,11 @@
     "url": "https://github.com/thewhodidthis/binocular/issues"
   },
   "scripts": {
-    "pretest": "eslint test.js",
-    "test": "browserify test | buble | kpow",
-    "prestart": "eslint index.es graph.js",
-    "start": "rollup -c node:x -f cjs index.es > index.js",
-    "prenexample": "eslint example/index.es",
-    "example": "cd example; rollup -c node:x -f iife index.es | buble > index.js",
-    "postexample": "open example/index.html"
+    "pretest": "eslint *.js",
+    "test": "browserify -t [ babelify --presets [ env ] ] test | kpow",
+    "prestart": "eslint example/index.es",
+    "start": "cd example; rollup -f iife index.es | buble > index.js",
+    "poststart": "open example/index.html"
   },
   "eslintConfig": {
     "extends": "@thewhodidthis"
@@ -31,12 +28,13 @@
   "dependencies": {},
   "devDependencies": {
     "@thewhodidthis/eslint-config": "latest",
+    "babel-preset-env": "^1.6.0",
+    "babelify": "^7.3.0",
     "browserify": "latest",
     "buble": "latest",
     "eslint": "latest",
     "kpow": "latest",
     "rollup": "latest",
-    "rollup-config-x": "latest",
     "tape": "latest"
   },
   "author": "sChzs BkgNns <sotirios.bakagiannis@gmail.com> (https://www.thewhodidthis.com)",
