@@ -3,13 +3,15 @@
 
 ### Setup
 ```sh
-# Fetch latest from github repo
-npm install thewhodidthis/binocular
+# Fetch latest from github
+npm i thewhodidthis/binocular
 ```
 
 ### Usage
 ```js
-import { monocle } from '@thewhodidthis/binocular'
+import inspect from '@thewhodidthis/binocular'
+
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 const audio = new AudioContext()
 const sound = audio.createOscillator()
@@ -17,21 +19,38 @@ const sound = audio.createOscillator()
 sound.connect(audio.destination)
 
 const board = document.createElement('canvas').getContext('2d')
-const chart = monocle(sound, board)
-const frame = () => {
-  chart()
+const scope = inspect(sound)
 
-  window.requestAnimationFrame(frame)
+const size = 256
+const half = size * 0.5
+
+board.canvas.width = board.canvas.height = size
+
+const chart = (values, weight) => {
+    board.clearRect(0, 0, size, size)
+
+    values.forEach((v, i) => {
+        const x = i * 2
+        const h = 0.5 * half * weight(v)
+
+        board.fillRect(i * 2, half, 1, h)
+    })
+}
+
+const frame = () => {
+    scope(chart)
+
+    window.requestAnimationFrame(frame)
 }
 
 document.body.appendChild(board.canvas)
 document.addEventListener('DOMContentLoaded', frame)
 
-let idle = true
+let isIdle = true
 
 document.addEventListener('click', () => {
-    if (idle) {
-        idle = sound.start()
+    if (isIdle) {
+        isIdle = sound.start()
     }
 })
 ```
