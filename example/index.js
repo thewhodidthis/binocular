@@ -1,67 +1,42 @@
 (function () {
 'use strict';
 
-var animate = function (callback, count) {
-  if ( count === void 0 ) count = 1;
-
-  var frameId;
-
-  var play = function (fn) { return window.requestAnimationFrame(fn); };
-  var stop = function () { return window.cancelAnimationFrame(frameId); };
-  var loop = function () {
-    if (frameId % count === 0) {
-      callback(frameId);
-    }
-
-    if (frameId) {
-      frameId = play(loop);
-    }
-  };
-
-  // Toggle
-  return function () {
-    frameId = (frameId === undefined) ? play(loop) : stop();
-
-    return frameId
-  }
-};
-
 var TAU = Math.PI * 2;
-var deg = TAU / 360;
 
 
 
-var radial = function (source, target, adjust) {
-  var count = source.frequencyBinCount;
-  var ref = target.canvas;
+var radially = function (context) {
+  var ref = context.canvas;
   var w = ref.width;
   var h = ref.height;
 
-  var steps = 360 / count;
   var halfH = h * 0.5;
   var halfW = w * 0.5;
 
-  // Figure out available space
-  var d = Math.min(w, h);
+  // Available space
+  var d = Math.min(w, h) * 0.75;
 
   // Base radius
-  var r = d * 0.325;
+  var r = d * 0.5;
 
-  // Precalculate multiplier
-  var f = r * 0.5;
+  // Radial multiplier
+  var f = r * 0.25;
 
-  return function (values) {
-    target.clearRect(0, 0, w, h);
+  return function (values, weight) {
+    var bins = values.length;
+    var step = TAU / bins;
 
-    target.save();
-    target.translate(halfW, halfH);
-    target.rotate(-0.25 * TAU);
+    context.clearRect(0, 0, w, h);
 
-    for (var i = 0; i < count; i += 1) {
-      var angle = i * steps * deg;
+    context.save();
+    context.translate(halfW, halfH);
+    context.rotate(-0.25 * TAU);
+
+    for (var i = 0; i < bins; i += 1) {
+      var angle = i * step;
 
       var v = values[i];
-      var k = f * adjust(v) || 1;
+      var k = f * weight(v) || 1;
 
       var r1 = r - k;
       var r2 = r + k;
@@ -70,56 +45,48 @@ var radial = function (source, target, adjust) {
       var x2 = r2 * Math.cos(angle);
       var y2 = r2 * Math.sin(angle);
 
-      target.beginPath();
-      target.moveTo(x1, y1);
-      target.lineTo(x2, y2);
-      target.stroke();
+      context.beginPath();
+      context.moveTo(x1, y1);
+      context.lineTo(x2, y2);
+      context.stroke();
     }
 
-    target.restore();
+    context.restore();
   }
 };
 
-var monocle = function () {
-  var param = [], len = arguments.length;
-  while ( len-- ) param[ len ] = arguments[ len ];
+var inspect = function (input, fft, fftSize) {
+  if ( fft === void 0 ) fft = false;
+  if ( fftSize === void 0 ) fftSize = 256;
 
-  var graph = radial;
+  if (input === undefined || !(input instanceof AudioNode)) {
+    throw TypeError('Missing valid source')
+  }
 
-  param.forEach(function (v, i) {
-    if (typeof v === 'function') {
-      param.splice(i, 1);
-      graph = v;
-    }
-  });
+  // Setup scope
+  var inspector = input.context.createAnalyser();
 
-  // No matter where the callback in found in the arguments, at least specify these in order
-  var input = param[0];
-  var board = param[1];
-  var pitch = param[2]; if ( pitch === void 0 ) pitch = false;
-  var fftSize = param[3]; if ( fftSize === void 0 ) fftSize = 256;
+  inspector.fftSize = fftSize;
 
-  var audio = input.context;
-  var scope = audio.createAnalyser();
-
-  // Center values based on whether in the time or frequency domain (1 / 128 or 1 / 256)
-  var scale = function (v) { return (pitch ? v * 0.00390625 : (v * 0.0078125) - 1); };
-
-  scope.fftSize = fftSize;
-
-  var bins = scope.frequencyBinCount;
+  var bins = inspector.frequencyBinCount;
   var data = new Uint8Array(bins);
 
-  var copy = function (d) { return (pitch ? scope.getByteFrequencyData(d) : scope.getByteTimeDomainData(d)); };
-  var draw = graph(scope, board, scale);
+  // Center values 1 / 128 for waveforms or 1 / 256 for spectra
+  var norm = function (v) { return (fft ? v * 0.00390625 : (v * 0.0078125) - 1); };
 
-  input.connect(scope);
+  // Decide type of data
+  var copy = function (a) { return (fft ? inspector.getByteFrequencyData(a) : inspector.getByteTimeDomainData(a)); };
 
-  return function (xtra) {
+  // Connect
+  input.connect(inspector);
+
+  return function (draw) {
+    if ( draw === void 0 ) draw = (function () {});
+
     copy(data);
-    draw(data, xtra);
+    draw(data, norm);
 
-    return scope
+    return inspector
   }
 };
 
@@ -128,55 +95,93 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext;
 var audio = new AudioContext();
 var fader = audio.createGain();
 
-var store = [];
-var total = 12;
-var cents = 1 / total;
-var plier = Math.pow(2, cents);
-
-var play = function (step) {
-  for (var i = 0; i < total; i += 1) {
-    var voice = store[i];
-
-    if (voice) {
-      voice.stop();
-    }
-
-    voice = audio.createOscillator();
-
-    voice.frequency.value = 20 * Math.pow(2, i) * Math.pow(plier, step);
-    voice.connect(fader);
-    voice.start();
-
-    store[i] = voice;
-  }
-};
-
 fader.gain.value = 0;
 fader.connect(audio.destination);
+
+var base = 87.31;
+var keys = 12;
+var semi = 1 / keys;
+
+var getFrequency = function (n) { return Math.pow(2, n * semi); };
+var getAmplitude = function (n) { return (0.5 * Math.cos(Math.PI * n)) + 0.5; };
+
+var octaves = 9;
+var spectra = 256;
+
+var real = new Float32Array(spectra);
+var imag = new Float32Array(spectra);
+
+for (var i = 0, exp = 1; i < octaves; i += 1, exp *= 2) {
+  real[exp] = getAmplitude(i / octaves);
+}
+
+var lookup = audio.createPeriodicWave(real, imag);
+var createVoice = function (v, i) {
+  var vco = audio.createOscillator();
+  var vca = audio.createGain();
+
+  vco.setPeriodicWave(lookup);
+  vco.connect(vca);
+  vca.connect(fader);
+
+  vco.frequency.value = v;
+  vca.gain.value = getAmplitude(i);
+
+  return { vco: vco, vca: vca }
+};
+
+var voices = Array.from({ length: 2 })
+  .map(function (v, i) { return base * (i + 1); })
+  .reverse()
+  .map(createVoice);
+
+var strike = function (x) { return voices.forEach(function (ref, i) {
+  var vco = ref.vco;
+  var vca = ref.vca;
+
+  var t = audio.currentTime;
+  var b = base + (base * (1 - i));
+  var f = getFrequency(x) * b;
+
+  var g = semi * x;
+  var k = Math.abs(i - g);
+  var a = getAmplitude(k);
+
+  vco.frequency.setValueAtTime(f, 0);
+
+  vca.gain.cancelScheduledValues(t);
+  vca.gain.setValueAtTime(0, t);
+  vca.gain.linearRampToValueAtTime(a, t + 0.002);
+  vca.gain.linearRampToValueAtTime(0, t + 0.9);
+}); };
 
 var master = document.querySelector('canvas').getContext('2d');
 var board1 = document.createElement('canvas').getContext('2d');
 var board2 = document.createElement('canvas').getContext('2d');
+
+var graph1 = radially(board1);
+var graph2 = radially(board2);
 
 var ref = master.canvas;
 var width = ref.width;
 var height = ref.height;
 
 var halfW = width * 0.5;
+
 var jumpX = -25;
 var jumpY = board1.canvas.height * 0.5;
 
 board1.strokeStyle = '#fff';
 
 // Partials
-var scope1 = monocle(fader, board1, true);
+var scope1 = inspect(fader, true);
 
 // Time domain
-var scope2 = monocle(fader, board2);
+var scope2 = inspect(fader);
 
-var draw = function () {
-  scope1();
-  scope2();
+var render = function () {
+  scope1(graph1);
+  scope2(graph2);
 
   master.clearRect(0, 0, width, height);
   master.fillRect(0, 0, halfW, height);
@@ -185,31 +190,49 @@ var draw = function () {
   master.drawImage(board2.canvas, jumpX + halfW, jumpY);
 };
 
-var loop = animate(function (f) {
-  if (f % 25 === 0) {
-    play(f % total);
+var lineup = function (fn) { return window.requestAnimationFrame(fn); };
+var cancel = function (id) { return window.cancelAnimationFrame(id); };
+
+var rounds = 1;
+var frames = -1;
+
+var repeat = function () {
+  if (frames % 25 === 0) {
+    strike(rounds);
+
+    rounds += 1;
+    rounds %= keys;
   }
 
-  draw();
-});
+  render();
 
-var next = function () {
-  var time = audio.currentTime;
-  var busy = loop();
-
-  if (busy === 1) {
-    play(0);
-  }
-
-  if (busy === undefined) {
-    fader.gain.setTargetAtTime(0, time, 0.125);
-  } else {
-    fader.gain.setTargetAtTime(cents, time, 1);
-  }
+  frames = lineup(repeat);
 };
 
-document.addEventListener('DOMContentLoaded', draw);
-document.addEventListener('click', next);
+var toggle = function () {
+  var time = audio.currentTime;
+
+  if (frames === -1) {
+    frames = voices.forEach(function (ref) {
+      var vco = ref.vco;
+
+      return vco.start();
+    });
+  }
+
+  if (frames === undefined) {
+    fader.gain.setTargetAtTime(1, time, 0.5);
+  } else {
+    fader.gain.setTargetAtTime(0, time, 0.125);
+  }
+
+  frames = frames ? cancel(frames) : lineup(repeat);
+};
+
+document.addEventListener('click', toggle);
+document.addEventListener('DOMContentLoaded', function () {
+  lineup(render);
+});
 
 }());
 
