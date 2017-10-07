@@ -1,25 +1,27 @@
 'use strict'
 
-window.AudioContext = window.AudioContext || window.webkitAudioContext
-
 const kpow = require('kpow')
 const test = require('tape')
-const { monocle } = require('./')
+
+import inspect from './'
+
+window.AudioContext = window.AudioContext || window.webkitAudioContext
 
 kpow()
 
-test('will init', (t) => {
-  t.plan(1)
+test('need source', (t) => {
+  t.throws(inspect, 'throws sans input')
+  t.end()
+})
 
-  try {
-    const audio = new AudioContext()
-    const sound = audio.createOscillator()
-    const board = document.createElement('canvas').getContext('2d')
+test('will default', (t) => {
+  const audio = new AudioContext()
+  const voice = audio.createOscillator()
+  const scope = inspect(voice)
 
-    monocle(sound, board)
-
-    t.pass('Success!')
-  } catch (e) {
-    t.fail('Unable to connect')
-  }
+  t.ok(scope, 'init success')
+  t.equal(typeof scope, 'function', 'got lambda on init')
+  t.doesNotThrow(scope, 'safe to call sans arguments')
+  t.ok(scope() instanceof AnalyserNode, 'got analyser on call')
+  t.end()
 })
