@@ -1,27 +1,23 @@
-'use strict'
-
-const kpow = require('kpow')
-const test = require('tape')
-
-import inspect from './'
+import 'cutaway'
+import { stat, veto } from 'tapeless'
+import inspect from './index.es'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
-kpow()
+const audio = new AudioContext()
+const voice = audio.createOscillator()
+const scope = inspect(voice)
 
-test('need source', (t) => {
-  t.throws(inspect, 'throws sans input')
-  t.end()
-})
+const ok = veto(a => !!a)
 
-test('will default', (t) => {
-  const audio = new AudioContext()
-  const voice = audio.createOscillator()
-  const scope = inspect(voice)
+try {
+  inspect()
+} catch (e) {
+  ok(e instanceof TypeError, 'expect TypeError when calling sans input')
+}
 
-  t.ok(scope, 'init success')
-  t.equal(typeof scope, 'function', 'got lambda on init')
-  t.doesNotThrow(scope, 'safe to call sans arguments')
-  t.ok(scope() instanceof AnalyserNode, 'got analyser on call')
-  t.end()
-})
+ok(typeof scope === 'function', 'expect lambda on init')
+ok(scope(), 'safe to call sans arguments')
+ok(scope() instanceof AnalyserNode, 'expect AudioAnalyser on call')
+
+stat()
