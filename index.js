@@ -1,31 +1,39 @@
-const inspect = (input, fft = false, fftSize = 256) => {
-  if (input === undefined || !(input instanceof AudioNode)) {
+'use strict';
+
+var scan = function (node, fft, fftSize) {
+  if ( fft === void 0 ) fft = false;
+  if ( fftSize === void 0 ) fftSize = 256;
+
+  if (node === undefined || !(node instanceof AudioNode)) {
     throw TypeError('Missing valid source')
   }
 
   // Setup scope
-  const inspector = input.context.createAnalyser()
+  var scanner = node.context.createAnalyser();
 
-  inspector.fftSize = fftSize
+  scanner.fftSize = fftSize;
 
-  const bins = inspector.frequencyBinCount
-  const data = new Uint8Array(bins)
-
-  // Center values 1 / 128 for waveforms or 1 / 256 for spectra
-  const norm = v => (fft ? v * 0.00390625 : (v * 0.0078125) - 1)
+  var bins = scanner.frequencyBinCount;
+  var data = new Uint8Array(bins);
 
   // Decide type of data
-  const copy = a => (fft ? inspector.getByteFrequencyData(a) : inspector.getByteTimeDomainData(a))
+  var copy = function (a) { return (fft ? scanner.getByteFrequencyData(a) : scanner.getByteTimeDomainData(a)); };
+
+  // Center values 1 / 128 for waveforms or 1 / 256 for spectra
+  var norm = function (v) { return (fft ? v * 0.00390625 : (v * 0.0078125) - 1); };
 
   // Connect
-  input.connect(inspector)
+  node.connect(scanner);
 
-  return (draw = (() => {})) => {
-    copy(data)
-    draw(data, norm)
+  return function (draw) {
+    if ( draw === void 0 ) draw = (function () {});
 
-    return inspector
+    copy(data);
+    draw(data.map(norm));
+
+    return scanner
   }
-}
+};
 
-export default inspect
+module.exports = scan;
+
