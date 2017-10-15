@@ -1,5 +1,5 @@
-import { radially } from '../graph.js'
-import inspect from '../index.js'
+import { around } from '@thewhodidthis/lines'
+import inspect from '../index.es'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
@@ -67,8 +67,8 @@ const master = document.querySelector('canvas').getContext('2d')
 const board1 = document.createElement('canvas').getContext('2d')
 const board2 = document.createElement('canvas').getContext('2d')
 
-const graph1 = radially(board1)
-const graph2 = radially(board2)
+const graph1 = around(board1)
+const graph2 = around(board2)
 
 const { width, height } = master.canvas
 

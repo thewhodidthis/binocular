@@ -5,7 +5,7 @@ var TAU = Math.PI * 2;
 
 
 
-var radially = function (context) {
+var around = function (context) {
   var ref = context.canvas;
   var w = ref.width;
   var h = ref.height;
@@ -22,8 +22,8 @@ var radially = function (context) {
   // Radial multiplier
   var f = r * 0.25;
 
-  return function (values, weight) {
-    var bins = values.length;
+  return function (data) {
+    var bins = data.length;
     var step = TAU / bins;
 
     context.clearRect(0, 0, w, h);
@@ -33,20 +33,24 @@ var radially = function (context) {
     context.rotate(-0.25 * TAU);
 
     for (var i = 0; i < bins; i += 1) {
-      var angle = i * step;
+      var ph = i * step;
+      var co = Math.cos(ph);
+      var si = Math.sin(ph);
 
-      var v = values[i];
-      var k = f * weight(v) || 1;
-
-      var r1 = r - k;
-      var r2 = r + k;
-      var x1 = r1 * Math.cos(angle);
-      var y1 = r1 * Math.sin(angle);
-      var x2 = r2 * Math.cos(angle);
-      var y2 = r2 * Math.sin(angle);
+      var kk = f * data[i] || 1;
 
       context.beginPath();
+
+      var r1 = r - kk;
+      var x1 = r1 * co;
+      var y1 = r1 * si;
+
       context.moveTo(x1, y1);
+
+      var r2 = r + kk;
+      var x2 = r2 * co;
+      var y2 = r2 * si;
+
       context.lineTo(x2, y2);
       context.stroke();
     }
@@ -55,38 +59,42 @@ var radially = function (context) {
   }
 };
 
-var inspect = function (input, fft, fftSize) {
+var analyse$1 = function (node, fft, fftSize) {
   if ( fft === void 0 ) fft = false;
   if ( fftSize === void 0 ) fftSize = 256;
 
-  if (input === undefined || !(input instanceof AudioNode)) {
+  if (node === undefined || !(node instanceof AudioNode)) {
     throw TypeError('Missing valid source')
   }
 
-  // Setup scope
-  var inspector = input.context.createAnalyser();
+  // Create scope
+  var analyser = node.context.createAnalyser();
 
-  inspector.fftSize = fftSize;
+  // Adjust scope
+  analyser.fftSize = fftSize;
 
-  var bins = inspector.frequencyBinCount;
-  var data = new Uint8Array(bins);
+  // Avoids having to polyfill `AnalyserNode.getFloatTimeDomainData`
+  var data = new Uint8Array(analyser.frequencyBinCount);
+
+  // Decide type of data
+  var copy = function (a) { return (fft ? analyser.getByteFrequencyData(a) : analyser.getByteTimeDomainData(a)); };
 
   // Center values 1 / 128 for waveforms or 1 / 256 for spectra
   var norm = function (v) { return (fft ? v * 0.00390625 : (v * 0.0078125) - 1); };
 
-  // Decide type of data
-  var copy = function (a) { return (fft ? inspector.getByteFrequencyData(a) : inspector.getByteTimeDomainData(a)); };
+  // Produce normalized copy of data
+  var snap = function (a) { return Float32Array.from(a, norm); };
 
   // Connect
-  input.connect(inspector);
+  node.connect(analyser);
 
   return function (draw) {
     if ( draw === void 0 ) draw = (function () {});
 
     copy(data);
-    draw(data, norm);
+    draw(snap(data));
 
-    return inspector
+    return analyser
   }
 };
 
@@ -159,8 +167,8 @@ var master = document.querySelector('canvas').getContext('2d');
 var board1 = document.createElement('canvas').getContext('2d');
 var board2 = document.createElement('canvas').getContext('2d');
 
-var graph1 = radially(board1);
-var graph2 = radially(board2);
+var graph1 = around(board1);
+var graph2 = around(board2);
 
 var ref = master.canvas;
 var width = ref.width;
@@ -174,10 +182,10 @@ var jumpY = board1.canvas.height * 0.5;
 board1.strokeStyle = '#fff';
 
 // Partials
-var scope1 = inspect(fader, true);
+var scope1 = analyse$1(fader, true);
 
 // Time domain
-var scope2 = inspect(fader);
+var scope2 = analyse$1(fader);
 
 var render = function () {
   scope1(graph1);
