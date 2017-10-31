@@ -1,39 +1,37 @@
 'use strict';
 
-var scan = function (node, fft, fftSize) {
-  if ( fft === void 0 ) fft = false;
-  if ( fftSize === void 0 ) fftSize = 256;
-
+const analyse = (node, fft = false, fftSize = 256) => {
   if (node === undefined || !(node instanceof AudioNode)) {
     throw TypeError('Missing valid source')
   }
 
-  // Setup scope
-  var scanner = node.context.createAnalyser();
+  // Create scope
+  const analyser = node.context.createAnalyser();
 
-  scanner.fftSize = fftSize;
+  // Adjust scope
+  analyser.fftSize = fftSize;
 
-  var bins = scanner.frequencyBinCount;
-  var data = new Uint8Array(bins);
+  // Avoids having to polyfill `AnalyserNode.getFloatTimeDomainData`
+  const data = new Uint8Array(analyser.frequencyBinCount);
 
   // Decide type of data
-  var copy = function (a) { return (fft ? scanner.getByteFrequencyData(a) : scanner.getByteTimeDomainData(a)); };
+  const copy = a => (fft ? analyser.getByteFrequencyData(a) : analyser.getByteTimeDomainData(a));
 
   // Center values 1 / 128 for waveforms or 1 / 256 for spectra
-  var norm = function (v) { return (fft ? v * 0.00390625 : (v * 0.0078125) - 1); };
+  const norm = v => (fft ? v * 0.00390625 : (v * 0.0078125) - 1);
+
+  // Produce normalized copy of data
+  const snap = a => Float32Array.from(a, norm);
 
   // Connect
-  node.connect(scanner);
+  node.connect(analyser);
 
-  return function (draw) {
-    if ( draw === void 0 ) draw = (function () {});
-
+  return (draw = (() => {})) => {
     copy(data);
-    draw(data.map(norm));
+    draw(snap(data));
 
-    return scanner
+    return analyser
   }
 };
 
-module.exports = scan;
-
+module.exports = analyse;
