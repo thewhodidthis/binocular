@@ -1,5 +1,5 @@
 import 'cutaway'
-import { stat, veto } from 'tapeless'
+import { assert, report } from 'tapeless'
 import inspect from './index.es'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
@@ -8,7 +8,7 @@ const audio = new AudioContext()
 const voice = audio.createOscillator()
 const scope = inspect(voice)
 
-const ok = veto(a => !!a)
+const { ok } = assert
 
 try {
   inspect()
@@ -20,4 +20,4 @@ ok(typeof scope === 'function', 'expect lambda on init')
 ok(scope(), 'safe to call sans arguments')
 ok(scope() instanceof AnalyserNode, 'expect AudioAnalyser on call')
 
-stat()
+report()
