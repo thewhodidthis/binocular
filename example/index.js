@@ -5,7 +5,9 @@ var TAU = Math.PI * 2;
 
 
 
-var around = function (context) {
+var around = function (context, base) {
+  if ( base === void 0 ) base = 0;
+
   var ref = context.canvas;
   var w = ref.width;
   var h = ref.height;
@@ -23,43 +25,43 @@ var around = function (context) {
   var f = r * 0.25;
 
   return function (data) {
-    var bins = data.length;
-    var step = TAU / bins;
+    var size = data.length;
+    var step = TAU / size;
 
     context.clearRect(0, 0, w, h);
 
+    // Rotate and draw from center
     context.save();
     context.translate(halfW, halfH);
     context.rotate(-0.25 * TAU);
+    context.beginPath();
 
-    for (var i = 0; i < bins; i += 1) {
-      var ph = i * step;
-      var co = Math.cos(ph);
-      var si = Math.sin(ph);
+    for (var i = 0; i < size; i += 1) {
+      var phi = i * step;
+      var cos = Math.cos(phi);
+      var sin = Math.sin(phi);
 
-      var kk = f * data[i] || 1;
+      var v = f * data[i] || base;
 
-      context.beginPath();
-
-      var r1 = r - kk;
-      var x1 = r1 * co;
-      var y1 = r1 * si;
+      var r1 = r - v;
+      var x1 = r1 * cos;
+      var y1 = r1 * sin;
 
       context.moveTo(x1, y1);
 
-      var r2 = r + kk;
-      var x2 = r2 * co;
-      var y2 = r2 * si;
+      var r2 = r + v;
+      var x2 = r2 * cos;
+      var y2 = r2 * sin;
 
       context.lineTo(x2, y2);
-      context.stroke();
     }
 
+    context.stroke();
     context.restore();
   }
 };
 
-var analyse$1 = function (node, fft, fftSize) {
+var analyse = function (node, fft, fftSize) {
   if ( fft === void 0 ) fft = false;
   if ( fftSize === void 0 ) fftSize = 256;
 
@@ -167,8 +169,8 @@ var master = document.querySelector('canvas').getContext('2d');
 var board1 = document.createElement('canvas').getContext('2d');
 var board2 = document.createElement('canvas').getContext('2d');
 
-var graph1 = around(board1);
-var graph2 = around(board2);
+var graph1 = around(board1, 1);
+var graph2 = around(board2, 1);
 
 var ref = master.canvas;
 var width = ref.width;
@@ -182,10 +184,10 @@ var jumpY = board1.canvas.height * 0.5;
 board1.strokeStyle = '#fff';
 
 // Partials
-var scope1 = analyse$1(fader, true);
+var scope1 = analyse(fader, true);
 
 // Time domain
-var scope2 = analyse$1(fader);
+var scope2 = analyse(fader);
 
 var render = function () {
   scope1(graph1);
