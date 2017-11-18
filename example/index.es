@@ -67,8 +67,8 @@ const master = document.querySelector('canvas').getContext('2d')
 const board1 = document.createElement('canvas').getContext('2d')
 const board2 = document.createElement('canvas').getContext('2d')
 
-const graph1 = around(board1, 1)
-const graph2 = around(board2, 1)
+const graph1 = around(board1)
+const graph2 = around(board2)
 
 const { width, height } = master.canvas
 

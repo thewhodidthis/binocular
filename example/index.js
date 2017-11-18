@@ -1,12 +1,12 @@
 (function () {
 'use strict';
 
-var TAU = Math.PI * 2;
+var TAU = 2 * Math.PI;
 
 
 
 var around = function (context, base) {
-  if ( base === void 0 ) base = 0;
+  if ( base === void 0 ) base = 1;
 
   var ref = context.canvas;
   var w = ref.width;
@@ -169,8 +169,8 @@ var master = document.querySelector('canvas').getContext('2d');
 var board1 = document.createElement('canvas').getContext('2d');
 var board2 = document.createElement('canvas').getContext('2d');
 
-var graph1 = around(board1, 1);
-var graph2 = around(board2, 1);
+var graph1 = around(board1);
+var graph2 = around(board2);
 
 var ref = master.canvas;
 var width = ref.width;
