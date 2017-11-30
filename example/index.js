@@ -1,64 +1,65 @@
 (function () {
 'use strict';
 
-var TAU = 2 * Math.PI;
-
-
-
-var around = function (context, base) {
+var draw = function (from, plot, base) {
   if ( base === void 0 ) base = 1;
 
-  var ref = context.canvas;
+  var ref = plot.canvas;
   var w = ref.width;
   var h = ref.height;
+  var x = w * 0.5;
+  var y = h * 0.5;
 
-  var halfH = h * 0.5;
-  var halfW = w * 0.5;
+  var max = Math.max(w, h);
+  var min = Math.min(w, h);
 
-  // Available space
-  var d = Math.min(w, h) * 0.75;
+  var map = from(max, min, base);
 
-  // Base radius
-  var r = d * 0.5;
+  return function (feed) {
+    plot.clearRect(0, 0, w, h);
+    plot.save();
+    plot.translate(x, y);
+    plot.beginPath();
 
-  // Radial multiplier
-  var f = r * 0.25;
+    Array.from(feed).map(map).forEach(function (ref) {
+      var a = ref[0];
+      var b = ref[1];
 
-  return function (data) {
-    var size = data.length;
-    var step = TAU / size;
+      plot.moveTo(a.x, a.y);
+      plot.lineTo(b.x, b.y);
+    });
 
-    context.clearRect(0, 0, w, h);
-
-    // Rotate and draw from center
-    context.save();
-    context.translate(halfW, halfH);
-    context.rotate(-0.25 * TAU);
-    context.beginPath();
-
-    for (var i = 0; i < size; i += 1) {
-      var phi = i * step;
-      var cos = Math.cos(phi);
-      var sin = Math.sin(phi);
-
-      var v = f * data[i] || base;
-
-      var r1 = r - v;
-      var x1 = r1 * cos;
-      var y1 = r1 * sin;
-
-      context.moveTo(x1, y1);
-
-      var r2 = r + v;
-      var x2 = r2 * cos;
-      var y2 = r2 * sin;
-
-      context.lineTo(x2, y2);
-    }
-
-    context.stroke();
-    context.restore();
+    plot.stroke();
+    plot.restore();
   }
+};
+
+var dial = function (span, room, base) { return function (v, i, ref) {
+  var length = ref.length;
+
+  var step = 2 * Math.PI / length;
+
+  var q = step * i;
+  var r = room * 0.375;
+  var k = 0.25 * r * v || base;
+
+  var cos = Math.cos(q);
+  var sin = Math.sin(q);
+
+  var v1 = r - k;
+  var v2 = r + k;
+
+  var a = { x: v1 * cos, y: v1 * sin };
+  var b = { x: v2 * cos, y: v2 * sin };
+
+  return [a, b]
+}; };
+
+var around = function () {
+  var args = [], len = arguments.length;
+  while ( len-- ) args[ len ] = arguments[ len ];
+
+  return draw.apply(void 0, [ dial ].concat( args ));
 };
 
 var analyse = function (node, fft, fftSize) {
