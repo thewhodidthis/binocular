@@ -1,6 +1,6 @@
 'use strict';
 
-const analyse = (node, fft = false, fftSize = 256) => {
+const analyse = (node, k = 1, fft = false, fftSize = 256) => {
   if (node === undefined || !(node instanceof AudioNode)) {
     throw TypeError('Missing valid source')
   }
@@ -18,7 +18,7 @@ const analyse = (node, fft = false, fftSize = 256) => {
   const copy = a => (fft ? analyser.getByteFrequencyData(a) : analyser.getByteTimeDomainData(a));
 
   // Center values 1 / 128 for waveforms or 1 / 256 for spectra
-  const norm = v => (fft ? v * 0.00390625 : (v * 0.0078125) - 1);
+  const norm = v => (fft ? v * 0.00390625 : (v * 0.0078125) - 1) * k;
 
   // Produce normalized copy of data
   const snap = a => Float32Array.from(a, norm);
