@@ -7,12 +7,12 @@ var draw = function (from, plot, base) {
   var ref = plot.canvas;
   var w = ref.width;
   var h = ref.height;
+
   var x = w * 0.5;
   var y = h * 0.5;
 
   var max = Math.max(w, h);
   var min = Math.min(w, h);
-
   var map = from(max, min, base);
 
   return function (feed) {
@@ -40,8 +40,8 @@ var dial = function (span, room, base) { return function (v, i, ref) {
   var step = 2 * Math.PI / length;
 
   var q = step * i;
-  var r = room * 0.375;
-  var k = 0.25 * r * v || base;
+  var r = room * 0.25;
+  var k = r * v || base;
 
   var cos = Math.cos(q);
   var sin = Math.sin(q);
@@ -62,7 +62,8 @@ var around = function () {
   return draw.apply(void 0, [ dial ].concat( args ));
 };
 
-var analyse = function (node, fft, fftSize) {
+var analyse = function (node, k, fft, fftSize) {
+  if ( k === void 0 ) k = 1;
   if ( fft === void 0 ) fft = false;
   if ( fftSize === void 0 ) fftSize = 256;
 
@@ -83,7 +84,7 @@ var analyse = function (node, fft, fftSize) {
   var copy = function (a) { return (fft ? analyser.getByteFrequencyData(a) : analyser.getByteTimeDomainData(a)); };
 
   // Center values 1 / 128 for waveforms or 1 / 256 for spectra
-  var norm = function (v) { return (fft ? v * 0.00390625 : (v * 0.0078125) - 1); };
+  var norm = function (v) { return (fft ? v * 0.00390625 : (v * 0.0078125) - 1) * k; };
 
   // Produce normalized copy of data
   var snap = function (a) { return Float32Array.from(a, norm); };
@@ -170,25 +171,26 @@ var master = document.querySelector('canvas').getContext('2d');
 var board1 = document.createElement('canvas').getContext('2d');
 var board2 = document.createElement('canvas').getContext('2d');
 
-var graph1 = around(board1);
-var graph2 = around(board2);
-
 var ref = master.canvas;
 var width = ref.width;
 var height = ref.height;
 
-var halfW = width * 0.5;
+var halfW = 0.5 * width;
+var jumpY = 0.5 * (height - halfW);
 
-var jumpX = -25;
-var jumpY = board1.canvas.height * 0.5;
+board2.canvas.width = board2.canvas.height = halfW;
+board1.canvas.width = board1.canvas.height = halfW;
 
 board1.strokeStyle = '#fff';
 
+var graph1 = around(board1);
+var graph2 = around(board2);
+
 // Partials
-var scope1 = analyse(fader, true);
+var scope1 = analyse(fader, 0.25, true);
 
 // Time domain
-var scope2 = analyse(fader);
+var scope2 = analyse(fader, 0.5);
 
 var render = function () {
   scope1(graph1);
@@ -197,15 +199,15 @@ var render = function () {
   master.clearRect(0, 0, width, height);
   master.fillRect(0, 0, halfW, height);
 
-  master.drawImage(board1.canvas, jumpX, jumpY);
-  master.drawImage(board2.canvas, jumpX + halfW, jumpY);
+  master.drawImage(board1.canvas, 0, jumpY);
+  master.drawImage(board2.canvas, halfW, jumpY);
 };
 
 var lineup = function (fn) { return window.requestAnimationFrame(fn); };
 var cancel = function (id) { return window.cancelAnimationFrame(id); };
 
 var rounds = 1;
-var frames = -1;
+var frames = 0;
 
 var repeat = function () {
   if (frames % 25 === 0) {
@@ -223,7 +225,7 @@ var repeat = function () {
 var toggle = function () {
   var time = audio.currentTime;
 
-  if (frames === -1) {
+  if (frames === 0) {
     frames = voices.forEach(function (ref) {
       var vco = ref.vco;
 

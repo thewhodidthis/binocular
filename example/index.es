@@ -67,23 +67,24 @@ const master = document.querySelector('canvas').getContext('2d')
 const board1 = document.createElement('canvas').getContext('2d')
 const board2 = document.createElement('canvas').getContext('2d')
 
-const graph1 = around(board1)
-const graph2 = around(board2)
-
 const { width, height } = master.canvas
 
-const halfW = width * 0.5
+const halfW = 0.5 * width
+const jumpY = 0.5 * (height - halfW)
 
-const jumpX = -25
-const jumpY = board1.canvas.height * 0.5
+board2.canvas.width = board2.canvas.height = halfW
+board1.canvas.width = board1.canvas.height = halfW
 
 board1.strokeStyle = '#fff'
 
+const graph1 = around(board1)
+const graph2 = around(board2)
+
 // Partials
-const scope1 = inspect(fader, true)
+const scope1 = inspect(fader, 0.25, true)
 
 // Time domain
-const scope2 = inspect(fader)
+const scope2 = inspect(fader, 0.5)
 
 const render = () => {
   scope1(graph1)
@@ -92,15 +93,15 @@ const render = () => {
   master.clearRect(0, 0, width, height)
   master.fillRect(0, 0, halfW, height)
 
-  master.drawImage(board1.canvas, jumpX, jumpY)
-  master.drawImage(board2.canvas, jumpX + halfW, jumpY)
+  master.drawImage(board1.canvas, 0, jumpY)
+  master.drawImage(board2.canvas, halfW, jumpY)
 }
 
 const lineup = fn => window.requestAnimationFrame(fn)
 const cancel = id => window.cancelAnimationFrame(id)
 
 let rounds = 1
-let frames = -1
+let frames = 0
 
 const repeat = () => {
   if (frames % 25 === 0) {
@@ -118,7 +119,7 @@ const repeat = () => {
 const toggle = () => {
   const time = audio.currentTime
 
-  if (frames === -1) {
+  if (frames === 0) {
     frames = voices.forEach(({ vco }) => vco.start())
   }
 
