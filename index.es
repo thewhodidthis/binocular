@@ -1,4 +1,4 @@
-const analyse = (node, k = 1, fft = false, fftSize = 256) => {
+const analyse = (node, fft = false, k = 1, fftSize = 256) => {
   if (node === undefined || !(node instanceof AudioNode)) {
     throw TypeError('Missing valid source')
   }
@@ -24,7 +24,7 @@ const analyse = (node, k = 1, fft = false, fftSize = 256) => {
   // Connect
   node.connect(analyser)
 
-  return (draw = (() => {})) => {
+  return (draw = v => v) => {
     copy(data)
     draw(snap(data))
 
