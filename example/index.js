@@ -62,9 +62,9 @@ var around = function () {
   return draw.apply(void 0, [ dial ].concat( args ));
 };
 
-var analyse = function (node, k, fft, fftSize) {
-  if ( k === void 0 ) k = 1;
+var analyse = function (node, fft, k, fftSize) {
   if ( fft === void 0 ) fft = false;
+  if ( k === void 0 ) k = 1;
   if ( fftSize === void 0 ) fftSize = 256;
 
   if (node === undefined || !(node instanceof AudioNode)) {
@@ -93,7 +93,7 @@ var analyse = function (node, k, fft, fftSize) {
   node.connect(analyser);
 
   return function (draw) {
-    if ( draw === void 0 ) draw = (function () {});
+    if ( draw === void 0 ) draw = function (v) { return v; };
 
     copy(data);
     draw(snap(data));
@@ -175,32 +175,33 @@ var ref = master.canvas;
 var width = ref.width;
 var height = ref.height;
 
-var halfW = 0.5 * width;
-var jumpY = 0.5 * (height - halfW);
+var mezzo = 0.5 * width;
+var y = 0.5 * (height - mezzo);
 
-board2.canvas.width = board2.canvas.height = halfW;
-board1.canvas.width = board1.canvas.height = halfW;
+board2.canvas.width = board2.canvas.height = mezzo;
+board1.canvas.width = board1.canvas.height = mezzo;
 
 board1.strokeStyle = '#fff';
+board1.transform(0, -1, 1, 0, 0, mezzo);
 
 var graph1 = around(board1);
 var graph2 = around(board2);
 
 // Partials
-var scope1 = analyse(fader, 0.25, true);
+var scope1 = analyse(fader, true, 0.25);
 
 // Time domain
-var scope2 = analyse(fader, 0.5);
+var scope2 = analyse(fader, null, 0.5);
 
 var render = function () {
   scope1(graph1);
   scope2(graph2);
 
   master.clearRect(0, 0, width, height);
-  master.fillRect(0, 0, halfW, height);
+  master.fillRect(0, 0, mezzo, height);
 
-  master.drawImage(board1.canvas, 0, jumpY);
-  master.drawImage(board2.canvas, halfW, jumpY);
+  master.drawImage(board1.canvas, 0, y);
+  master.drawImage(board2.canvas, mezzo, y);
 };
 
 var lineup = function (fn) { return window.requestAnimationFrame(fn); };

@@ -69,32 +69,33 @@ const board2 = document.createElement('canvas').getContext('2d')
 
 const { width, height } = master.canvas
 
-const halfW = 0.5 * width
-const jumpY = 0.5 * (height - halfW)
+const mezzo = 0.5 * width
+const y = 0.5 * (height - mezzo)
 
-board2.canvas.width = board2.canvas.height = halfW
-board1.canvas.width = board1.canvas.height = halfW
+board2.canvas.width = board2.canvas.height = mezzo
+board1.canvas.width = board1.canvas.height = mezzo
 
 board1.strokeStyle = '#fff'
+board1.transform(0, -1, 1, 0, 0, mezzo)
 
 const graph1 = around(board1)
 const graph2 = around(board2)
 
 // Partials
-const scope1 = inspect(fader, 0.25, true)
+const scope1 = inspect(fader, true, 0.25)
 
 // Time domain
-const scope2 = inspect(fader, 0.5)
+const scope2 = inspect(fader, null, 0.5)
 
 const render = () => {
   scope1(graph1)
   scope2(graph2)
 
   master.clearRect(0, 0, width, height)
-  master.fillRect(0, 0, halfW, height)
+  master.fillRect(0, 0, mezzo, height)
 
-  master.drawImage(board1.canvas, 0, jumpY)
-  master.drawImage(board2.canvas, halfW, jumpY)
+  master.drawImage(board1.canvas, 0, y)
+  master.drawImage(board2.canvas, mezzo, y)
 }
 
 const lineup = fn => window.requestAnimationFrame(fn)
