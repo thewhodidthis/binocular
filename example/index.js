@@ -1,10 +1,10 @@
 (function () {
 'use strict';
 
-var draw = function (from, plot, base) {
-  if ( base === void 0 ) base = 1;
+var draw = function (mapping, context, footing) {
+  if ( footing === void 0 ) footing = 1;
 
-  var ref = plot.canvas;
+  var ref = context.canvas;
   var w = ref.width;
   var h = ref.height;
 
@@ -13,42 +13,56 @@ var draw = function (from, plot, base) {
 
   var max = Math.max(w, h);
   var min = Math.min(w, h);
-  var map = from(max, min, base);
 
-  return function (feed) {
-    plot.clearRect(0, 0, w, h);
-    plot.save();
-    plot.translate(x, y);
-    plot.beginPath();
+  var transform = mapping(max, min, footing);
 
-    Array.from(feed).map(map).forEach(function (ref) {
+  return function (points) {
+    context.clearRect(0, 0, w, h);
+    context.save();
+    context.translate(x, y);
+    context.beginPath();
+
+    Array.from(points).map(transform).forEach(function (ref) {
       var a = ref[0];
       var b = ref[1];
 
-      plot.moveTo(a.x, a.y);
-      plot.lineTo(b.x, b.y);
+      context.moveTo(a.x, a.y);
+      context.lineTo(b.x, b.y);
     });
 
-    plot.stroke();
-    plot.restore();
+    context.stroke();
+    context.restore();
+
+    return context
   }
 };
 
-var dial = function (span, room, base) { return function (v, i, ref) {
-  var length = ref.length;
+var dial = function (max, min, bottom) { return function (v, i, ref) {
+  var total = ref.length;
 
-  var step = 2 * Math.PI / length;
+  // Step size
+  var s = 2 * Math.PI / total;
 
-  var q = step * i;
-  var r = room * 0.25;
-  var k = r * v || base;
+  // Outer radius
+  var r = min * 0.25;
 
+  // Current step
+  var q = s * i;
+
+  // Line height
+  var k = r * v || bottom;
+
+  // Angles
   var cos = Math.cos(q);
   var sin = Math.sin(q);
 
+  // Lower part
   var v1 = r - k;
+
+  // Upper part
   var v2 = r + k;
 
+  // From, to
   var a = { x: v1 * cos, y: v1 * sin };
   var b = { x: v2 * cos, y: v2 * sin };
 
@@ -175,14 +189,14 @@ var ref = master.canvas;
 var width = ref.width;
 var height = ref.height;
 
-var mezzo = 0.5 * width;
-var y = 0.5 * (height - mezzo);
+var middle = 0.5 * width;
+var spaceY = 0.5 * (height - middle);
 
-board2.canvas.width = board2.canvas.height = mezzo;
-board1.canvas.width = board1.canvas.height = mezzo;
+board2.canvas.width = board2.canvas.height = middle;
+board1.canvas.width = board1.canvas.height = middle;
 
 board1.strokeStyle = '#fff';
-board1.transform(0, -1, 1, 0, 0, mezzo);
+board1.transform(0, -1, 1, 0, 0, middle);
 
 var graph1 = around(board1);
 var graph2 = around(board2);
@@ -198,10 +212,10 @@ var render = function () {
   scope2(graph2);
 
   master.clearRect(0, 0, width, height);
-  master.fillRect(0, 0, mezzo, height);
+  master.fillRect(0, 0, middle, height);
 
-  master.drawImage(board1.canvas, 0, y);
-  master.drawImage(board2.canvas, mezzo, y);
+  master.drawImage(board1.canvas, 0, spaceY);
+  master.drawImage(board2.canvas, middle, spaceY);
 };
 
 var lineup = function (fn) { return window.requestAnimationFrame(fn); };
