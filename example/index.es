@@ -85,7 +85,7 @@ const graph2 = around(board2)
 const scope1 = inspect(fader, true, 0.25)
 
 // Time domain
-const scope2 = inspect(fader, null, 0.5)
+const scope2 = inspect(fader, false, 0.5)
 
 const render = () => {
   scope1(graph1)

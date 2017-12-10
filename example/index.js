@@ -1,8 +1,8 @@
 (function () {
 'use strict';
 
-var draw = function (mapping, context, footing) {
-  if ( footing === void 0 ) footing = 1;
+var draw = function (mapping, context, bum) {
+  if ( bum === void 0 ) bum = 1;
 
   var ref = context.canvas;
   var w = ref.width;
@@ -14,7 +14,7 @@ var draw = function (mapping, context, footing) {
   var max = Math.max(w, h);
   var min = Math.min(w, h);
 
-  var transform = mapping(max, min, footing);
+  var transform = mapping(max, min, bum);
 
   return function (points) {
     context.clearRect(0, 0, w, h);
@@ -37,29 +37,29 @@ var draw = function (mapping, context, footing) {
   }
 };
 
-var dial = function (max, min, bottom) { return function (v, i, ref) {
-  var total = ref.length;
+var dial = function (max, min, bum) { return function (v, i, ref) {
+  var length = ref.length;
 
   // Step size
-  var s = 2 * Math.PI / total;
+  var s = 2 * Math.PI / length;
 
-  // Outer radius
+  // Midpoint
   var r = min * 0.25;
 
   // Current step
   var q = s * i;
 
-  // Line height
-  var k = r * v || bottom;
+  // Half size
+  var k = r * v || bum;
 
-  // Angles
+  // Tilt
   var cos = Math.cos(q);
   var sin = Math.sin(q);
 
-  // Lower part
+  // Lower half
   var v1 = r - k;
 
-  // Upper part
+  // Upper half
   var v2 = r + k;
 
   // From, to
@@ -205,7 +205,7 @@ var graph2 = around(board2);
 var scope1 = analyse(fader, true, 0.25);
 
 // Time domain
-var scope2 = analyse(fader, null, 0.5);
+var scope2 = analyse(fader, false, 0.5);
 
 var render = function () {
   scope1(graph1);
