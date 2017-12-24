@@ -24,9 +24,9 @@ const analyse = (node, fft = false, k = 1, fftSize = 256) => {
   // Connect
   node.connect(analyser)
 
-  return (draw = v => v) => {
+  return (next = v => v) => {
     copy(data)
-    draw(snap(data))
+    next(snap(data))
 
     return analyser
   }
