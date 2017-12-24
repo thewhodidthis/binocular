@@ -106,11 +106,11 @@ var analyse = function (node, fft, k, fftSize) {
   // Connect
   node.connect(analyser);
 
-  return function (draw) {
-    if ( draw === void 0 ) draw = function (v) { return v; };
+  return function (next) {
+    if ( next === void 0 ) next = function (v) { return v; };
 
     copy(data);
-    draw(snap(data));
+    next(snap(data));
 
     return analyser
   }
