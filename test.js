@@ -18,6 +18,5 @@ try {
 
 ok(typeof scope === 'function', 'expect lambda on init')
 ok(scope(), 'safe to call sans arguments')
-ok(scope() instanceof AnalyserNode, 'expect AudioAnalyser on call')
 
 report()
