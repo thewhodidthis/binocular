@@ -30,14 +30,8 @@ var analyse = function (node, fft, k, fftSize) {
   // Connect
   node.connect(analyser);
 
-  return function (next) {
-    if ( next === void 0 ) next = function (v) { return v; };
-
-    copy(data);
-    next(snap(data));
-
-    return analyser
-  }
+  /* eslint no-sequences: 1 */
+  return function () { return (copy(data), snap(data)); }
 };
 
 module.exports = analyse;

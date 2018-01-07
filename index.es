@@ -24,12 +24,8 @@ const analyse = (node, fft = false, k = 1, fftSize = 256) => {
   // Connect
   node.connect(analyser)
 
-  return (next = v => v) => {
-    copy(data)
-    next(snap(data))
-
-    return analyser
-  }
+  /* eslint no-sequences: 1 */
+  return () => (copy(data), snap(data))
 }
 
 export default analyse
