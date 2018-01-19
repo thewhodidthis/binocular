@@ -1,81 +1,6 @@
 (function () {
 'use strict';
 
-var draw = function (mapping, context, bum) {
-  if ( bum === void 0 ) bum = 1;
-
-  var ref = context.canvas;
-  var w = ref.width;
-  var h = ref.height;
-
-  var x = w * 0.5;
-  var y = h * 0.5;
-
-  var max = Math.max(w, h);
-  var min = Math.min(w, h);
-
-  var transform = mapping(max, min, bum);
-
-  return function (points) {
-    context.clearRect(0, 0, w, h);
-    context.save();
-    context.translate(x, y);
-    context.beginPath();
-
-    Array.from(points).map(transform).forEach(function (ref) {
-      var a = ref[0];
-      var b = ref[1];
-
-      context.moveTo(a.x, a.y);
-      context.lineTo(b.x, b.y);
-    });
-
-    context.stroke();
-    context.restore();
-
-    return context
-  }
-};
-
-var dial = function (max, min, bum) { return function (v, i, ref) {
-  var length = ref.length;
-
-  // Step size
-  var s = 2 * Math.PI / length;
-
-  // Midpoint
-  var r = min * 0.25;
-
-  // Current step
-  var q = s * i;
-
-  // Half size
-  var k = r * v || bum;
-
-  // Tilt
-  var cos = Math.cos(q);
-  var sin = Math.sin(q);
-
-  // Lower half
-  var v1 = r - k;
-
-  // Upper half
-  var v2 = r + k;
-
-  // From, to
-  var a = { x: v1 * cos, y: v1 * sin };
-  var b = { x: v2 * cos, y: v2 * sin };
-
-  return [a, b]
-}; };
-
-var around = function () {
-  var args = [], len = arguments.length;
-  while ( len-- ) args[ len ] = arguments[ len ];
-
-  return draw.apply(void 0, [ dial ].concat( args ));
-};
-
 var analyse = function (node, fft, k, fftSize) {
   if ( fft === void 0 ) fft = false;
   if ( k === void 0 ) k = 1;
@@ -106,161 +31,139 @@ var analyse = function (node, fft, k, fftSize) {
   // Connect
   node.connect(analyser);
 
-  return function (next) {
-    if ( next === void 0 ) next = function (v) { return v; };
-
-    copy(data);
-    next(snap(data));
-
-    return analyser
-  }
+  /* eslint no-sequences: 1 */
+  return function () { return (copy(data), snap(data)); }
 };
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
 var audio = new AudioContext();
 var fader = audio.createGain();
+var input = audio.createBufferSource();
 
-fader.gain.value = 0;
-fader.connect(audio.destination);
+var canvas = document.querySelector('canvas');
+var target = canvas.getContext('2d');
+var buffer = canvas.cloneNode().getContext('2d');
 
-var base = 87.31;
-var keys = 12;
-var semi = 1 / keys;
+target.fillStyle = 'white';
+buffer.lineWidth = 4;
 
-var getFrequency = function (n) { return Math.pow(2, n * semi); };
-var getAmplitude = function (n) { return (0.5 * Math.cos(Math.PI * n)) + 0.5; };
+var ref = target.canvas;
+var w = ref.width;
+var h = ref.height;
+var middle = h * 0.5;
 
-var octaves = 9;
-var spectra = 256;
+var sketch = function (offset) {
+  if ( offset === void 0 ) offset = 0;
 
-var real = new Float32Array(spectra);
-var imag = new Float32Array(spectra);
+  var grid = { x: w / 128, y: h * 0.25 };
 
-for (var i = 0, exp = 1; i < octaves; i += 1, exp *= 2) {
-  real[exp] = getAmplitude(i / octaves);
-}
+  var spot = grid.y + offset;
+  var edge = middle + offset;
 
-var lookup = audio.createPeriodicWave(real, imag);
-var createVoice = function (v, i) {
-  var vco = audio.createOscillator();
-  var vca = audio.createGain();
+  return function (points) {
+    buffer.clearRect(0, offset, w, edge);
+    buffer.beginPath();
 
-  vco.setPeriodicWave(lookup);
-  vco.connect(vca);
-  vca.connect(fader);
+    points.forEach(function (v, i) {
+      var x = i * grid.x;
+      var y = Math.floor(v * middle) || 1;
 
-  vco.frequency.value = v;
-  vca.gain.value = getAmplitude(i);
+      buffer.moveTo(2 + x, spot + y);
+      buffer.lineTo(2 + x, spot - y);
+    });
 
-  return { vco: vco, vca: vca }
+    buffer.stroke();
+  }
 };
 
-var voices = Array.from({ length: 2 })
-  .map(function (v, i) { return base * (i + 1); })
-  .reverse()
-  .map(createVoice);
-
-var strike = function (x) { return voices.forEach(function (ref, i) {
-  var vco = ref.vco;
-  var vca = ref.vca;
-
-  var t = audio.currentTime;
-  var b = base + (base * (1 - i));
-  var f = getFrequency(x) * b;
-
-  var g = semi * x;
-  var k = Math.abs(i - g);
-  var a = getAmplitude(k);
-
-  vco.frequency.setValueAtTime(f, 0);
-
-  vca.gain.cancelScheduledValues(t);
-  vca.gain.setValueAtTime(0, t);
-  vca.gain.linearRampToValueAtTime(a, t + 0.002);
-  vca.gain.linearRampToValueAtTime(0, t + 0.9);
-}); };
-
-var master = document.querySelector('canvas').getContext('2d');
-var board1 = document.createElement('canvas').getContext('2d');
-var board2 = document.createElement('canvas').getContext('2d');
-
-var ref = master.canvas;
-var width = ref.width;
-var height = ref.height;
-
-var middle = 0.5 * width;
-var spaceY = 0.5 * (height - middle);
-
-board2.canvas.width = board2.canvas.height = middle;
-board1.canvas.width = board1.canvas.height = middle;
-
-board1.strokeStyle = '#fff';
-board1.transform(0, -1, 1, 0, 0, middle);
-
-var graph1 = around(board1);
-var graph2 = around(board2);
-
-// Partials
-var scope1 = analyse(fader, true, 0.25);
+var graph1 = sketch();
+var graph2 = sketch(middle);
 
 // Time domain
-var scope2 = analyse(fader, false, 0.5);
+var scope1 = analyse(fader, 0, 0.5);
+
+// Partials
+var scope2 = analyse(fader, 1, 0.25);
+
+var update = function () {
+  var a = scope1();
+  var b = scope2();
+
+  graph1(a);
+  graph2(b);
+};
 
 var render = function () {
-  scope1(graph1);
-  scope2(graph2);
-
-  master.clearRect(0, 0, width, height);
-  master.fillRect(0, 0, middle, height);
-
-  master.drawImage(board1.canvas, 0, spaceY);
-  master.drawImage(board2.canvas, middle, spaceY);
+  target.fillRect(0, 0, w, h);
+  target.drawImage(buffer.canvas, 0, 0);
 };
 
-var lineup = function (fn) { return window.requestAnimationFrame(fn); };
-var cancel = function (id) { return window.cancelAnimationFrame(id); };
-
-var rounds = 1;
-var frames = 0;
-
+/* eslint no-unused-vars: 1 */
 var repeat = function () {
-  if (frames % 25 === 0) {
-    strike(rounds);
-
-    rounds += 1;
-    rounds %= keys;
-  }
-
+  update();
   render();
 
-  frames = lineup(repeat);
+  window.requestAnimationFrame(repeat);
 };
 
-var toggle = function () {
-  var time = audio.currentTime;
+var launch = function (e) {
+  if (e) {
+    document.documentElement.classList.remove('is-frozen');
+    document.removeEventListener('touchstart', launch);
+  }
 
-  if (frames === 0) {
-    frames = voices.forEach(function (ref) {
-      var vco = ref.vco;
+  if (input.buffer && !input.playbackState) {
+    input.start();
+  }
 
-      return vco.start();
+  window.requestAnimationFrame(repeat);
+};
+
+var revert = function () {
+  var request = new XMLHttpRequest();
+
+  // The clip is from Stephen Fry's reading of `The Hitchhikers Guide to the Galaxy` by Douglas Adams
+  // http://www.penguinrandomhouseaudio.com/book/670/the-hitchhikers-guide-to-the-galaxy/
+  request.open('GET', 'clip.mp3', true);
+
+  request.responseType = 'arraybuffer';
+  request.onload = function (e) {
+    audio.decodeAudioData(e.target.response, function (data) {
+      input.buffer = data;
+      input.loop = true;
+
+      input.connect(fader);
+      fader.connect(audio.destination);
+
+      document.documentElement.classList.remove('is-mining');
+
+      if ('ontouchstart' in window) {
+        document.documentElement.classList.add('is-frozen');
+        document.addEventListener('touchstart', launch);
+      } else {
+        launch();
+      }
+    }, function () {
+      document.documentElement.classList.add('is-broken');
     });
-  }
+  };
 
-  if (frames === undefined) {
-    fader.gain.setTargetAtTime(1, time, 0.5);
-  } else {
-    fader.gain.setTargetAtTime(0, time, 0.125);
-  }
+  document.documentElement.classList.add('is-mining');
 
-  frames = frames ? cancel(frames) : lineup(repeat);
+  request.send();
 };
 
-document.addEventListener('click', toggle);
-document.addEventListener('DOMContentLoaded', function () {
-  lineup(render);
-});
+if (navigator.mediaDevices) {
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    var source = audio.createMediaStreamSource(stream);
+
+    source.connect(fader);
+    launch();
+  }).catch(revert);
+} else {
+  revert();
+}
 
 }());
 
