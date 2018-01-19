@@ -45,7 +45,6 @@ var canvas = document.querySelector('canvas');
 var target = canvas.getContext('2d');
 var buffer = canvas.cloneNode().getContext('2d');
 
-target.fillStyle = 'white';
 buffer.lineWidth = 4;
 
 var ref = target.canvas;
@@ -95,7 +94,7 @@ var update = function () {
 };
 
 var render = function () {
-  target.fillRect(0, 0, w, h);
+  target.clearRect(0, 0, w, h);
   target.drawImage(buffer.canvas, 0, 0);
 };
 

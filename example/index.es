@@ -10,7 +10,6 @@ const canvas = document.querySelector('canvas')
 const target = canvas.getContext('2d')
 const buffer = canvas.cloneNode().getContext('2d')
 
-target.fillStyle = 'white'
 buffer.lineWidth = 4
 
 const { width: w, height: h } = target.canvas
@@ -56,7 +55,7 @@ const update = () => {
 }
 
 const render = () => {
-  target.fillRect(0, 0, w, h)
+  target.clearRect(0, 0, w, h)
   target.drawImage(buffer.canvas, 0, 0)
 }
 
