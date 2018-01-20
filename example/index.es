@@ -15,22 +15,22 @@ buffer.lineWidth = 3
 const { width: w, height: h } = target.canvas
 
 const sketch = (offset = 0) => {
-  const map = { x: w / 128, y: h * 0.125 }
-  const fix = 0.5 * map.x
-  const cap = 0.5 * h
+  const edge = 0.5 * h
+  const step = w / 128
+  const butt = 0.5 * step
 
   return (points) => {
-    buffer.clearRect(0, offset - map.y, w, offset + map.y)
     buffer.beginPath()
 
     points.forEach((v, i) => {
-      const x = i * map.x
-      const y = Math.floor(v * cap) || 1
+      const x = i * step
+      const y = Math.floor(v * edge) || 1
 
-      buffer.moveTo(fix + x, offset + y)
-      buffer.lineTo(fix + x, offset - y)
+      buffer.moveTo(butt + x, offset + y)
+      buffer.lineTo(butt + x, offset - y)
     })
 
+    buffer.strokeStyle = offset > h * 0.5 ? '#00d' : '#d00'
     buffer.stroke()
   }
 }
@@ -39,7 +39,7 @@ const graph1 = sketch(h * 0.35)
 const graph2 = sketch(h * 0.65)
 
 // Time domain
-const scope1 = inspect(fader, 0, 0.25)
+const scope1 = inspect(fader, 0, 0.75)
 
 // Partials
 const scope2 = inspect(fader, 1, 0.25)
@@ -55,6 +55,7 @@ const update = () => {
 const render = () => {
   target.clearRect(0, 0, w, h)
   target.drawImage(buffer.canvas, 0, 0)
+  buffer.clearRect(0, 0, w, h)
 }
 
 /* eslint no-unused-vars: 1 */

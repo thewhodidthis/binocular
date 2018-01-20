@@ -54,22 +54,22 @@ var h = ref.height;
 var sketch = function (offset) {
   if ( offset === void 0 ) offset = 0;
 
-  var map = { x: w / 128, y: h * 0.125 };
-  var fix = 0.5 * map.x;
-  var cap = 0.5 * h;
+  var edge = 0.5 * h;
+  var step = w / 128;
+  var butt = 0.5 * step;
 
   return function (points) {
-    buffer.clearRect(0, offset - map.y, w, offset + map.y);
     buffer.beginPath();
 
     points.forEach(function (v, i) {
-      var x = i * map.x;
-      var y = Math.floor(v * cap) || 1;
+      var x = i * step;
+      var y = Math.floor(v * edge) || 1;
 
-      buffer.moveTo(fix + x, offset + y);
-      buffer.lineTo(fix + x, offset - y);
+      buffer.moveTo(butt + x, offset + y);
+      buffer.lineTo(butt + x, offset - y);
     });
 
+    buffer.strokeStyle = offset > h * 0.5 ? '#00d' : '#d00';
     buffer.stroke();
   }
 };
@@ -78,7 +78,7 @@ var graph1 = sketch(h * 0.35);
 var graph2 = sketch(h * 0.65);
 
 // Time domain
-var scope1 = analyse(fader, 0, 0.25);
+var scope1 = analyse(fader, 0, 0.75);
 
 // Partials
 var scope2 = analyse(fader, 1, 0.25);
@@ -94,6 +94,7 @@ var update = function () {
 var render = function () {
   target.clearRect(0, 0, w, h);
   target.drawImage(buffer.canvas, 0, 0);
+  buffer.clearRect(0, 0, w, h);
 };
 
 /* eslint no-unused-vars: 1 */
