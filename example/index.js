@@ -37,6 +37,8 @@ var analyse = function (node, fft, k, fftSize) {
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
+var ivory = document.documentElement;
+
 var audio = new AudioContext();
 var fader = audio.createGain();
 var input = audio.createBufferSource();
@@ -97,7 +99,6 @@ var render = function () {
   buffer.clearRect(0, 0, w, h);
 };
 
-/* eslint no-unused-vars: 1 */
 var repeat = function () {
   update();
   render();
@@ -107,7 +108,7 @@ var repeat = function () {
 
 var launch = function (e) {
   if (e) {
-    document.documentElement.classList.remove('is-frozen');
+    ivory.classList.remove('is-frozen');
     document.removeEventListener('touchstart', launch);
   }
 
@@ -134,10 +135,10 @@ var revert = function () {
       input.connect(fader);
       fader.connect(audio.destination);
 
-      document.documentElement.classList.remove('is-mining');
+      ivory.classList.remove('is-mining');
 
       if ('ontouchstart' in window) {
-        document.documentElement.classList.add('is-frozen');
+        ivory.classList.add('is-frozen');
         document.addEventListener('touchstart', launch);
 
         // Avoid spaces on mobile
@@ -146,11 +147,11 @@ var revert = function () {
         launch();
       }
     }, function () {
-      document.documentElement.classList.add('is-broken');
+      ivory.classList.add('is-broken');
     });
   };
 
-  document.documentElement.classList.add('is-mining');
+  ivory.classList.add('is-mining');
 
   request.send();
 };

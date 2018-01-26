@@ -2,6 +2,8 @@ import inspect from '../index.es'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
+const ivory = document.documentElement
+
 const audio = new AudioContext()
 const fader = audio.createGain()
 const input = audio.createBufferSource()
@@ -58,7 +60,6 @@ const render = () => {
   buffer.clearRect(0, 0, w, h)
 }
 
-/* eslint no-unused-vars: 1 */
 const repeat = () => {
   update()
   render()
@@ -68,7 +69,7 @@ const repeat = () => {
 
 const launch = (e) => {
   if (e) {
-    document.documentElement.classList.remove('is-frozen')
+    ivory.classList.remove('is-frozen')
     document.removeEventListener('touchstart', launch)
   }
 
@@ -95,10 +96,10 @@ const revert = () => {
       input.connect(fader)
       fader.connect(audio.destination)
 
-      document.documentElement.classList.remove('is-mining')
+      ivory.classList.remove('is-mining')
 
       if ('ontouchstart' in window) {
-        document.documentElement.classList.add('is-frozen')
+        ivory.classList.add('is-frozen')
         document.addEventListener('touchstart', launch)
 
         // Avoid spaces on mobile
@@ -107,11 +108,11 @@ const revert = () => {
         launch()
       }
     }, () => {
-      document.documentElement.classList.add('is-broken')
+      ivory.classList.add('is-broken')
     })
   }
 
-  document.documentElement.classList.add('is-mining')
+  ivory.classList.add('is-mining')
 
   request.send()
 }
