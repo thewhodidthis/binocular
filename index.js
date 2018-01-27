@@ -1,5 +1,8 @@
 'use strict';
 
+// # Binocular
+// Helps inspect sounds
+
 var analyse = function (node, fft, k, fftSize) {
   if ( fft === void 0 ) fft = false;
   if ( k === void 0 ) k = 1;

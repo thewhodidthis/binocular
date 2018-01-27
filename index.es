@@ -1,3 +1,6 @@
+// # Binocular
+// Helps inspect sounds
+
 const analyse = (node, fft = false, k = 1, fftSize = 256) => {
   if (node === undefined || !(node instanceof AudioNode)) {
     throw TypeError('Missing valid source')
