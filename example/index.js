@@ -126,7 +126,7 @@ var revert = function () {
   var request = new XMLHttpRequest();
 
   // The clip is from Stephen Fry's reading of `The Hitchhikers Guide to the Galaxy` by Douglas Adams
-  // http://www.penguinrandomhouseaudio.com/book/670/the-hitchhikers-guide-to-the-galaxy/
+  // http://www.penguinrandomhouseaudio.com/book/670/the-hitchhikers-guide-to-the-galaxy
   request.open('GET', 'clip.mp3', true);
 
   request.responseType = 'arraybuffer';
