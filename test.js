@@ -1,6 +1,6 @@
 import 'cutaway'
 import { assert, report } from 'tapeless'
-import inspect from './index.es'
+import inspect from './index.mjs'
 
 window.AudioContext = window.AudioContext || window.webkitAudioContext
 
