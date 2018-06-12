@@ -1,5 +1,4 @@
-## Binocular
-> Preset canvas graphs for monitoring web audio signals
+> For monitoring web audio signals
 
 ### Setup
 ```sh
