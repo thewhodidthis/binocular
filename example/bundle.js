@@ -36,84 +36,77 @@
 
   window.AudioContext = window.AudioContext || window.webkitAudioContext;
 
-  const ivory = document.documentElement;
+  const html = document.documentElement;
 
-  // Prompt for user interaction to bypass autoplay restrictions
-  ivory.classList.add('is-frozen');
-
-  // Click handler
-  const start = () => {
-    ivory.classList.remove('is-frozen');
-
+  document.addEventListener('click', () => {
     const canvas = document.querySelector('canvas');
-    const target = canvas.getContext('2d');
-    const buffer = canvas.cloneNode().getContext('2d');
+    const { width, height } = canvas;
+
+    const finalContext = canvas.getContext('2d');
+    const dummyContext = canvas.cloneNode().getContext('2d');
 
     // Avoid spaces on mobile
-    buffer.lineWidth = 'ontouchstart' in window ? 5 : 3;
-
-    const { width: w, height: h } = target.canvas;
+    dummyContext.lineWidth = 'ontouchstart' in window ? 5 : 3;
 
     const sketch = (offset = 0) => {
-      const edge = 0.5 * h;
-      const step = w / 128;
-      const butt = 0.5 * step;
+      const verticalMax = 0.5 * height;
+      const step = width / 128;
+      const halfStep = 0.5 * step;
 
       return (points) => {
-        buffer.beginPath();
+        dummyContext.beginPath();
 
         points.forEach((v, i) => {
           const x = i * step;
-          const y = Math.floor(v * edge) || 1;
+          const y = Math.floor(v * verticalMax) || 1;
 
-          buffer.moveTo(butt + x, offset + y);
-          buffer.lineTo(butt + x, offset - y);
+          dummyContext.moveTo(halfStep + x, offset + y);
+          dummyContext.lineTo(halfStep + x, offset - y);
         });
 
-        buffer.strokeStyle = offset > h * 0.5 ? '#00d' : '#d00';
-        buffer.stroke();
+        dummyContext.strokeStyle = offset > height * 0.5 ? '#00d' : '#d00';
+        dummyContext.stroke();
       }
     };
 
-    const graph1 = sketch(h * 0.35);
-    const graph2 = sketch(h * 0.65);
+    const graphTop = sketch(height * 0.35);
+    const graphBottom = sketch(height * 0.65);
 
-    const audio = new AudioContext();
-    const fader = audio.createGain();
-    const input = audio.createBufferSource();
+    const audioContext = new AudioContext();
+    const fader = audioContext.createGain();
+    const input = audioContext.createBufferSource();
 
-    // Time domain
-    const scope1 = analyse(fader, 0, 0.75);
-
-    // Partials
-    const scope2 = analyse(fader, 1, 0.25);
+    const amplitudeInspector = analyse(fader, 0, 0.75);
+    const frequencyInspector = analyse(fader, 1, 0.25);
 
     const update = () => {
-      const a = scope1();
-      const b = scope2();
+      const amplitudeData = amplitudeInspector();
 
-      graph1(a);
-      graph2(b);
+      graphTop(amplitudeData);
+
+      const frequencyData = frequencyInspector();
+
+      graphBottom(frequencyData);
     };
 
     const render = () => {
-      target.clearRect(0, 0, w, h);
-      target.drawImage(buffer.canvas, 0, 0);
-      buffer.clearRect(0, 0, w, h);
+      finalContext.clearRect(0, 0, width, height);
+      finalContext.drawImage(dummyContext.canvas, 0, 0);
+      dummyContext.clearRect(0, 0, width, height);
     };
 
-    const loop = () => {
+    const repeat = () => {
       update();
       render();
 
-      window.requestAnimationFrame(loop);
+      window.requestAnimationFrame(repeat);
     };
 
-    const play = () => {
+    const start = () => {
       try {
         input.start();
 
-        window.requestAnimationFrame(loop);
+        window.requestAnimationFrame(repeat);
       } catch (x) {
         console.log(x);
       }
@@ -124,18 +117,17 @@
 
       request.responseType = 'arraybuffer';
       request.onload = (e) => {
-        audio.decodeAudioData(e.target.response, (data) => {
+        audioContext.decodeAudioData(e.target.response, (data) => {
           input.buffer = data;
           input.loop = true;
 
           input.connect(fader);
-          fader.connect(audio.destination);
+          fader.connect(audioContext.destination);
+          start();
 
-          play();
-
-          ivory.classList.remove('is-mining');
+          html.classList.remove('is-mining');
         }, () => {
-          ivory.classList.add('is-broken');
+          html.classList.add('is-broken');
         });
       };
 
@@ -145,24 +137,25 @@
       request.send();
 
       // Signal loading started
-      ivory.classList.add('is-mining');
+      html.classList.add('is-mining');
     };
 
     if (navigator.mediaDevices) {
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then((stream) => {
-          const source = audio.createMediaStreamSource(stream);
+          const mediaStreamSource = audioContext.createMediaStreamSource(stream);
 
-          source.connect(fader);
-          play();
+          mediaStreamSource.connect(fader);
+          start();
         }).catch(revert);
     } else {
       revert();
     }
 
-    document.removeEventListener('click', start);
-  };
+    html.classList.remove('is-frozen');
+  }, { once: true });
 
-  document.addEventListener('click', start);
+  // Prompt for user interaction to bypass autoplay restrictions
+  html.classList.add('is-frozen');
 
 }());
