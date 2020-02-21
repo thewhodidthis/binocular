@@ -10,46 +10,36 @@ npm i thewhodidthis/binocular
 ```js
 import inspect from '@thewhodidthis/binocular'
 
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
+window.AudioContext = window.AudioContext || window.webkitAudioContext
 
-const audio = new AudioContext()
-const sound = audio.createOscillator()
+// Draw a sine wave bar chart
+const canvas = document.createElement('canvas')
+const canvasContext = canvas.getContext('2d')
 
-sound.connect(audio.destination)
-
-const board = document.createElement('canvas').getContext('2d')
-const scope = inspect(sound)
-
-const size = 256
-const half = size * 0.5
-
-board.canvas.width = board.canvas.height = size
-
-const chart = (values, weight) => {
-    board.clearRect(0, 0, size, size)
-
-    values.forEach((v, i) => {
-        const x = i * 2
-        const h = 0.5 * half * weight(v)
-
-        board.fillRect(i * 2, half, 1, h)
-    })
-}
-
-const frame = () => {
-    scope(chart)
-
-    window.requestAnimationFrame(frame)
-}
-
-document.body.appendChild(board.canvas)
-document.addEventListener('DOMContentLoaded', frame)
-
-let isIdle = true
+document.body.appendChild(canvas)
 
 document.addEventListener('click', () => {
-    if (isIdle) {
-        isIdle = sound.start()
+  const audio = new AudioContext()
+  const oscillator = audio.createOscillator()
+
+  oscillator.connect(audio.destination)
+  oscillator.start()
+
+  const oscilloscope = inspect(oscillator)
+  const draw = () => {
+    canvasContext.clearRect(0, 0, canvas.width, canvas.height)
+
+    const data = oscilloscope()
+
+    for (const [index, value] of data.entries()) {
+      const barHeight = 0.5 * canvas.height * value
+
+      canvasContext.fillRect(index * 2, canvas.width * 0.5, 1, barHeight)
     }
-})
+
+    window.requestAnimationFrame(draw)
+  }
+
+  window.requestAnimationFrame(draw)
+}, { once: true })
 ```
