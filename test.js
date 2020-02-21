@@ -13,10 +13,15 @@ const { ok } = assert
 try {
   inspect()
 } catch (e) {
-  ok(e instanceof TypeError, 'expect TypeError when calling sans input')
+  ok
+    .describe('expect TypeError when calling sans input')
+    .test(e instanceof TypeError)
 }
 
-ok(typeof scope === 'function', 'expect lambda on init')
-ok(scope(), 'safe to call sans arguments')
+ok
+  .describe('expect lambda on init')
+  .test(typeof scope === 'function')
+  .describe('safe to call sans arguments')
+  .test(scope())
 
 report()
