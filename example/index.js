@@ -4,126 +4,129 @@ window.AudioContext = window.AudioContext || window.webkitAudioContext
 
 const ivory = document.documentElement
 
-const audio = new AudioContext()
-const fader = audio.createGain()
-const input = audio.createBufferSource()
+// Prompt for user interaction to bypass autoplay restrictions
+ivory.classList.add('is-frozen')
 
-const canvas = document.querySelector('canvas')
-const target = canvas.getContext('2d')
-const buffer = canvas.cloneNode().getContext('2d')
+// Click handler
+const start = () => {
+  ivory.classList.remove('is-frozen')
 
-buffer.lineWidth = 3
+  const canvas = document.querySelector('canvas')
+  const target = canvas.getContext('2d')
+  const buffer = canvas.cloneNode().getContext('2d')
 
-const { width: w, height: h } = target.canvas
+  // Avoid spaces on mobile
+  buffer.lineWidth = 'ontouchstart' in window ? 5 : 3
 
-const sketch = (offset = 0) => {
-  const edge = 0.5 * h
-  const step = w / 128
-  const butt = 0.5 * step
+  const { width: w, height: h } = target.canvas
 
-  return (points) => {
-    buffer.beginPath()
+  const sketch = (offset = 0) => {
+    const edge = 0.5 * h
+    const step = w / 128
+    const butt = 0.5 * step
 
-    points.forEach((v, i) => {
-      const x = i * step
-      const y = Math.floor(v * edge) || 1
+    return (points) => {
+      buffer.beginPath()
 
-      buffer.moveTo(butt + x, offset + y)
-      buffer.lineTo(butt + x, offset - y)
-    })
+      points.forEach((v, i) => {
+        const x = i * step
+        const y = Math.floor(v * edge) || 1
 
-    buffer.strokeStyle = offset > h * 0.5 ? '#00d' : '#d00'
-    buffer.stroke()
-  }
-}
+        buffer.moveTo(butt + x, offset + y)
+        buffer.lineTo(butt + x, offset - y)
+      })
 
-const graph1 = sketch(h * 0.35)
-const graph2 = sketch(h * 0.65)
-
-// Time domain
-const scope1 = inspect(fader, 0, 0.75)
-
-// Partials
-const scope2 = inspect(fader, 1, 0.25)
-
-const update = () => {
-  const a = scope1()
-  const b = scope2()
-
-  graph1(a)
-  graph2(b)
-}
-
-const render = () => {
-  target.clearRect(0, 0, w, h)
-  target.drawImage(buffer.canvas, 0, 0)
-  buffer.clearRect(0, 0, w, h)
-}
-
-const repeat = () => {
-  update()
-  render()
-
-  window.requestAnimationFrame(repeat)
-}
-
-const launch = (e) => {
-  if (e) {
-    ivory.classList.remove('is-frozen')
-    document.removeEventListener('touchstart', launch)
+      buffer.strokeStyle = offset > h * 0.5 ? '#00d' : '#d00'
+      buffer.stroke()
+    }
   }
 
-  if (input.buffer && !input.playbackState) {
-    input.start()
+  const graph1 = sketch(h * 0.35)
+  const graph2 = sketch(h * 0.65)
+
+  const audio = new AudioContext()
+  const fader = audio.createGain()
+  const input = audio.createBufferSource()
+
+  // Time domain
+  const scope1 = inspect(fader, 0, 0.75)
+
+  // Partials
+  const scope2 = inspect(fader, 1, 0.25)
+
+  const update = () => {
+    const a = scope1()
+    const b = scope2()
+
+    graph1(a)
+    graph2(b)
   }
 
-  window.requestAnimationFrame(repeat)
-}
-
-const revert = () => {
-  const request = new XMLHttpRequest()
-
-  // The clip is from Stephen Fry's reading of `The Hitchhikers Guide to the Galaxy` by Douglas Adams
-  // http://www.penguinrandomhouseaudio.com/book/670/the-hitchhikers-guide-to-the-galaxy
-  request.open('GET', 'clip.mp3', true)
-
-  request.responseType = 'arraybuffer'
-  request.onload = (e) => {
-    audio.decodeAudioData(e.target.response, (data) => {
-      input.buffer = data
-      input.loop = true
-
-      input.connect(fader)
-      fader.connect(audio.destination)
-
-      ivory.classList.remove('is-mining')
-
-      if ('ontouchstart' in window) {
-        ivory.classList.add('is-frozen')
-        document.addEventListener('touchstart', launch)
-
-        // Avoid spaces on mobile
-        buffer.lineWidth = 5
-      } else {
-        launch()
-      }
-    }, () => {
-      ivory.classList.add('is-broken')
-    })
+  const render = () => {
+    target.clearRect(0, 0, w, h)
+    target.drawImage(buffer.canvas, 0, 0)
+    buffer.clearRect(0, 0, w, h)
   }
 
-  ivory.classList.add('is-mining')
+  const loop = () => {
+    update()
+    render()
 
-  request.send()
+    window.requestAnimationFrame(loop)
+  }
+
+  const play = () => {
+    try {
+      input.start()
+
+      window.requestAnimationFrame(loop)
+    } catch (x) {
+      console.log(x)
+    }
+  }
+
+  const revert = () => {
+    const request = new XMLHttpRequest()
+
+    request.responseType = 'arraybuffer'
+    request.onload = (e) => {
+      audio.decodeAudioData(e.target.response, (data) => {
+        input.buffer = data
+        input.loop = true
+
+        input.connect(fader)
+        fader.connect(audio.destination)
+
+        play()
+
+        ivory.classList.remove('is-mining')
+      }, () => {
+        ivory.classList.add('is-broken')
+      })
+    }
+
+    // Stephen Fry's reading of
+    // http://www.penguinrandomhouseaudio.com/book/670/the-hitchhikers-guide-to-the-galaxy
+    request.open('GET', 'clip.mp3', true)
+    request.send()
+
+    // Signal loading started
+    ivory.classList.add('is-mining')
+  }
+
+  if (navigator.mediaDevices) {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then((stream) => {
+        const source = audio.createMediaStreamSource(stream)
+
+        source.connect(fader)
+        play()
+      }).catch(revert)
+  } else {
+    revert()
+  }
+
+  document.removeEventListener('click', start)
 }
 
-if (navigator.mediaDevices) {
-  navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-    const source = audio.createMediaStreamSource(stream)
-
-    source.connect(fader)
-    launch()
-  }).catch(revert)
-} else {
-  revert()
-}
+document.addEventListener('click', start)
