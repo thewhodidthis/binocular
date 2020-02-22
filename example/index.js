@@ -113,7 +113,8 @@ document.addEventListener('click', () => {
 
         mediaStreamSource.connect(fader)
         start()
-      }).catch(revert)
+      })
+      .catch(revert)
   } else {
     revert()
   }
