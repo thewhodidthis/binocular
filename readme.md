@@ -4,7 +4,7 @@ Takes care of some of the boilerplate involved in creating an [`AnalyserNode`](h
 
 ## setup
 
-Fetch latest from github,
+Fetch latest from GitHub,
 
 ```sh
 # Both ES and CJS versions are available
