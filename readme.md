@@ -1,6 +1,6 @@
 ## about
 
-Takes care of some of the boilerplate involved in creating an [`AnalyserNode`](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode) for monitoring web audio signals be it in the time or frequency domains.
+Takes care of some of the boilerplate involved in creating an [`AnalyserNode`](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode) for monitoring web audio signals, be it in the time or frequency domains.
 
 ## setup
 
@@ -13,7 +13,7 @@ npm i thewhodidthis/binocular
 
 ## usage
 
-The default and only export is an anonymous function that requires an `AudioNode` type input and which once initialized returns another function meant to be called repeatedly for monitoring the data. For example,
+The default and only export is an anonymous function expecting an `AudioNode` type input and which once initialized returns another function meant to be called repeatedly for monitoring the data. For example,
 
 ```js
 import inspect from '@thewhodidthis/binocular'
