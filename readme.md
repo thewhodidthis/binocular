@@ -4,11 +4,11 @@ Takes care of some of the boilerplate involved in creating an [`AnalyserNode`](h
 
 ## setup
 
-Fetch latest from GitHub,
+Fetch latest from GitHub directly:
 
 ```sh
 # Both ES and CJS versions are available
-npm i thewhodidthis/binocular
+npm install thewhodidthis/binocular
 ```
 
 ## usage
